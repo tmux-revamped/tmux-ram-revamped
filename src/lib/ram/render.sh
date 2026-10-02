@@ -80,7 +80,7 @@ ram_render_pressure() {
 }
 
 _ram_mb_to_gb() {
-  awk -v m="${1:-0}" 'BEGIN { printf "%.1f", m / 1024 }'
+  LC_ALL=C awk -v m="${1:-0}" 'BEGIN { printf "%.1f", m / 1024 }'
 }
 
 ram_render_breakdown() {
@@ -108,7 +108,7 @@ export -f ram_render_breakdown
 
 # _ram_kb_human KB -> a compact human size, auto-scaled to K/M/G.
 _ram_kb_human() {
-  awk -v k="${1:-0}" 'BEGIN{if(k>=1048576){v=k/1048576;u="G"}else if(k>=1024){v=k/1024;u="M"}else{v=k;u="K"} if(v==int(v)) printf "%d%s",v,u; else printf "%.1f%s",v,u}'
+  LC_ALL=C awk -v k="${1:-0}" 'BEGIN{if(k>=1048576){v=k/1048576;u="G"}else if(k>=1024){v=k/1024;u="M"}else{v=k;u="K"} if(v==int(v)) printf "%d%s",v,u; else printf "%.1f%s",v,u}'
 }
 
 ram_render_absolute() {

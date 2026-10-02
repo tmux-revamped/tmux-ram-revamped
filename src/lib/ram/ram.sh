@@ -16,7 +16,7 @@ source "${_RAM_LIB_DIR}/../utils/has-command.sh"
 
 # _meminfo_field TEXT KEY -> the kB value for a /proc/meminfo key.
 _meminfo_field() {
-  printf '%s\n' "${1}" | awk -v k="${2}:" '$1 == k { print $2; exit }'
+  printf '%s\n' "${1}" | LC_ALL=C awk -v k="${2}:" '$1 == k { print $2; exit }'
 }
 
 # ram_pct_from_meminfo TEXT -> integer used-memory percent from /proc/meminfo.
@@ -26,7 +26,7 @@ ram_pct_from_meminfo() {
   avail=$(_meminfo_field "${1}" "MemAvailable")
   [[ "${total}" =~ ^[0-9]+$ && "${avail}" =~ ^[0-9]+$ && "${total}" -gt 0 ]] \
     || { echo 0; return 0; }
-  awk -v t="${total}" -v a="${avail}" 'BEGIN { printf "%.0f", ((t - a) / t) * 100 }'
+  LC_ALL=C awk -v t="${total}" -v a="${avail}" 'BEGIN { printf "%.0f", ((t - a) / t) * 100 }'
 }
 
 # _vmstat_pages TEXT LABEL -> the page count for a vm_stat label.
@@ -48,7 +48,7 @@ ram_pct_from_vmstat() {
   local used=$(( active + wired + compressed ))
   local total=$(( free + active + inactive + spec + wired + compressed ))
   (( total <= 0 )) && { echo 0; return 0; }
-  awk -v u="${used}" -v t="${total}" 'BEGIN { printf "%.0f", (u / t) * 100 }'
+  LC_ALL=C awk -v u="${used}" -v t="${total}" 'BEGIN { printf "%.0f", (u / t) * 100 }'
 }
 
 # breakdown_from_vmstat TEXT PAGESIZE -> "wired compressed inactive free" in MB.
@@ -59,7 +59,7 @@ breakdown_from_vmstat() {
 
 # breakdown_from_meminfo TEXT -> "buffers 0 cached free" in MB, the Linux mapping.
 breakdown_from_meminfo() {
-  printf '%s\n' "${1}" | awk '/MemFree:/{f=$2} /^Cached:/{c=$2} /Buffers:/{b=$2} END{printf "%d %d %d %d", (b+0)/1024, 0, (c+0)/1024, (f+0)/1024}'
+  printf '%s\n' "${1}" | LC_ALL=C awk '/MemFree:/{f=$2} /^Cached:/{c=$2} /Buffers:/{b=$2} END{printf "%d %d %d %d", (b+0)/1024, 0, (c+0)/1024, (f+0)/1024}'
 }
 
 # Host-probe seams. Tests override these.
@@ -93,7 +93,7 @@ avail_from_meminfo() {
   total=$(_meminfo_field "${1}" "MemTotal")
   avail=$(_meminfo_field "${1}" "MemAvailable")
   [[ "${total}" =~ ^[0-9]+$ && "${avail}" =~ ^[0-9]+$ && "${total}" -gt 0 ]] || { echo 0; return 0; }
-  awk -v a="${avail}" -v t="${total}" 'BEGIN { printf "%.0f", (a / t) * 100 }'
+  LC_ALL=C awk -v a="${avail}" -v t="${total}" 'BEGIN { printf "%.0f", (a / t) * 100 }'
 }
 
 # avail_from_vmstat TEXT -> available-memory percent from vm_stat.
@@ -107,7 +107,7 @@ avail_from_vmstat() {
   local avail=$(( free + inactive + spec ))
   local total=$(( free + active + inactive + spec + wired + compressed ))
   (( total <= 0 )) && { echo 0; return 0; }
-  awk -v a="${avail}" -v t="${total}" 'BEGIN { printf "%.0f", (a / t) * 100 }'
+  LC_ALL=C awk -v a="${avail}" -v t="${total}" 'BEGIN { printf "%.0f", (a / t) * 100 }'
 }
 
 # swap_from_meminfo TEXT -> "<used_kb> <total_kb>" from /proc/meminfo.
@@ -128,12 +128,12 @@ swap_from_sysctl() {
 # swap_pct USED_KB TOTAL_KB -> integer percent, empty when total is zero.
 swap_pct() {
   [[ "${1}" =~ ^[0-9]+$ && "${2}" =~ ^[0-9]+$ && "${2}" -gt 0 ]] || { echo ""; return 0; }
-  awk -v u="${1}" -v t="${2}" 'BEGIN { printf "%.0f", (u / t) * 100 }'
+  LC_ALL=C awk -v u="${1}" -v t="${2}" 'BEGIN { printf "%.0f", (u / t) * 100 }'
 }
 
 # psi_from_text TEXT -> integer `some avg10` percent from /proc/pressure/memory.
 psi_from_text() {
-  printf '%s\n' "${1}" | awk '/^some / { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub(/^avg10=/, "", $i); printf "%.0f", $i; exit } }'
+  printf '%s\n' "${1}" | LC_ALL=C awk '/^some / { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub(/^avg10=/, "", $i); printf "%.0f", $i; exit } }'
 }
 
 # pressure_from_macos TEXT -> integer free percent from `memory_pressure`.
@@ -211,12 +211,12 @@ absolute_from_meminfo() {
 # absolute_from_vmstat TEXT PAGESIZE -> "<used_kb> <total_kb>" from vm_stat.
 absolute_from_vmstat() {
   local ps="${2:-4096}"
-  printf '%s\n' "${1}" | awk -v ps="${ps}" '/Pages free:/{f=$NF} /Pages active:/{a=$NF} /Pages inactive:/{i=$NF} /Pages speculative:/{s=$NF} /Pages wired down:/{w=$NF} /occupied by compressor:/{c=$NF} END{u=(a+w+c)*ps/1024; t=(f+a+i+s+w+c)*ps/1024; printf "%d %d", u, t}'
+  printf '%s\n' "${1}" | LC_ALL=C awk -v ps="${ps}" '/Pages free:/{f=$NF} /Pages active:/{a=$NF} /Pages inactive:/{i=$NF} /Pages speculative:/{s=$NF} /Pages wired down:/{w=$NF} /occupied by compressor:/{c=$NF} END{u=(a+w+c)*ps/1024; t=(f+a+i+s+w+c)*ps/1024; printf "%d %d", u, t}'
 }
 
 # commit_from_meminfo TEXT -> Committed_AS/CommitLimit percent, empty if absent.
 commit_from_meminfo() {
-  printf '%s\n' "${1}" | awk '/CommitLimit:/{l=$2} /Committed_AS:/{c=$2} END{if((l+0)>0) printf "%.0f", ((c+0)/(l+0))*100}'
+  printf '%s\n' "${1}" | LC_ALL=C awk '/CommitLimit:/{l=$2} /Committed_AS:/{c=$2} END{if((l+0)>0) printf "%.0f", ((c+0)/(l+0))*100}'
 }
 
 # reclaimable_from_meminfo TEXT -> reclaimable cache in kB (cached+buffers+slab).
