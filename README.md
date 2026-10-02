@@ -115,7 +115,7 @@ set -g @ram_revamped_percentage_label ''
 |--------|--------------|
 | `percentage` | `md-gauge` |
 | `available` | `md-memory` |
-| `swap` | `md-harddisk` |
+| `swap` | `md-file_swap` |
 | `pressure` | `md-sine_wave` |
 | `breakdown` | `md-chart_donut` |
 | `absolute` | `md-database` |
