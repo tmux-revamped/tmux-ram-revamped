@@ -148,3 +148,10 @@ teardown() {
   [[ -z "$(ram_render_breakdown "")" ]]
   [[ "$(ram_render_breakdown "2048 1024 3072 4096")" == "W 2.0G C 1.0G I 3.0G F 4.0G" ]]
 }
+
+@test "ram - a comma-decimal locale still formats with a dot" {
+  locale -a 2>/dev/null | grep -qiE '^pt_BR\.utf-?8$' || skip "the pt_BR.UTF-8 locale is not installed"
+  LC_ALL=pt_BR.UTF-8 LC_NUMERIC=pt_BR.UTF-8 run _ram_mb_to_gb 1536
+
+  [[ "${output}" == "1.5" ]]
+}
