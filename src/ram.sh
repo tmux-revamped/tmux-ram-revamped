@@ -86,7 +86,7 @@ ram_nerd_label() {
   case "${1}" in
     percentage) printf '\xf3\xb0\x8a\x9a' ;;
     available) printf '\xf3\xb0\x8d\x9b' ;;
-    swap) printf '\xf3\xb0\x93\xa2' ;;
+    swap) printf '\xf3\xb0\x8b\x8a' ;;
     pressure) printf '\xf3\xb0\xa5\x9b' ;;
     breakdown) printf '\xf3\xb0\x9e\xaf' ;;
     absolute) printf '\xf3\xb0\x86\xbc' ;;
