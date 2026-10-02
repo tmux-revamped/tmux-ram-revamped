@@ -187,3 +187,67 @@ teardown() {
   [[ "${output}" == *"tmux-ram-revamped doctor"* ]]
   [[ "${output}" == *"/proc/meminfo"* ]]
 }
+
+@test "ram.sh dispatcher - a metric renders without a label by default" {
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "42%" ]]
+}
+
+@test "ram.sh dispatcher - the nerd icon set labels a metric" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == $'\xf3\xb0\x8a\x9a'" 42%" ]]
+}
+
+@test "ram.sh dispatcher - a set label beats the icon set" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+  set_tmux_option "@ram_revamped_percentage_label" "USE"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "USE 42%" ]]
+}
+
+@test "ram.sh dispatcher - an empty label removes the icon set's label" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+  ram_option_exists() { [[ "${1}" == "@ram_revamped_percentage_label" ]]; }
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "42%" ]]
+}
+
+@test "ram.sh dispatcher - an empty value renders nothing even with a label" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+
+  run ram_labelled percentage ""
+
+  [ -z "${output}" ]
+}
+
+@test "ram.sh dispatcher - only value metrics carry a label" {
+  run ram_is_labelled fg_color
+
+  [ "${status}" -eq 1 ]
+}
+
+@test "ram.sh dispatcher - main labels the rendered percentage" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+  ram_render_metric() { echo "42%"; }
+
+  run main percentage
+
+  [[ "${output}" == $'\xf3\xb0\x8a\x9a'" 42%" ]]
+}
+
+@test "ram.sh dispatcher - main leaves a color unlabelled" {
+  set_tmux_option "@ram_revamped_icons" "nerd"
+  ram_render_metric() { echo "#[fg=red]"; }
+
+  run main fg_color
+
+  [[ "${output}" == "#[fg=red]" ]]
+}

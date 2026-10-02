@@ -51,17 +51,8 @@ ram_tick() {
   cache_refresh_if_stale percent "$(ram_max_age)" ram_refresh
 }
 
-main() {
-  local cmd="${1:-}"
-
-  case "${cmd}" in
-    refresh) ram_refresh; return 0 ;;
-    popup)   ram_popup; return 0 ;;
-    doctor)  ram_doctor; return 0 ;;
-  esac
-
-  ram_tick
-
+ram_render_metric() {
+  local cmd="${1}"
   case "${cmd}" in
     percentage)  ram_render_percentage "$(cache_get percent)" ;;
     icon)        ram_render_icon "$(cache_get percent)" ;;
@@ -82,6 +73,74 @@ main() {
     text)        ram_render_text "$(cache_get percent)" "$(cache_get available)" "$(cache_get swap)" ;;
     *)           return 0 ;;
   esac
+}
+
+ram_is_labelled() {
+  case "${1}" in
+    percentage | available | swap | pressure | breakdown | absolute | commit | reclaimable | top_process | graph | trend) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+ram_nerd_label() {
+  case "${1}" in
+    percentage) printf '\xf3\xb0\x8a\x9a' ;;
+    available) printf '\xf3\xb0\x8d\x9b' ;;
+    swap) printf '\xf3\xb0\x93\xa2' ;;
+    pressure) printf '\xf3\xb0\xa5\x9b' ;;
+    breakdown) printf '\xf3\xb0\x9e\xaf' ;;
+    absolute) printf '\xf3\xb0\x86\xbc' ;;
+    commit) printf '\xf3\xb0\x92\xa0' ;;
+    reclaimable) printf '\xf3\xb0\x91\x8c' ;;
+    top_process) printf '\xf3\xb0\xa3\x86' ;;
+    graph) printf '\xf3\xb0\x9e\xb1' ;;
+    trend) printf '\xf3\xb0\x94\xb5' ;;
+    *) printf '' ;;
+  esac
+}
+
+ram_option_exists() {
+  [[ -n "$(tmux show-option -gq "${1}" 2>/dev/null)" ]]
+}
+
+ram_label() {
+  local option="@ram_revamped_${1}_label"
+  if ram_option_exists "${option}"; then
+    tmux show-option -gqv "${option}" 2>/dev/null
+  elif [[ "$(get_tmux_option "@ram_revamped_icons" "ascii")" == "nerd" ]]; then
+    ram_nerd_label "${1}"
+  fi
+}
+
+ram_labelled() {
+  local metric="${1}" value="${2}" label
+  [[ -n "${value}" ]] || return 0
+  label="$(ram_label "${metric}")"
+  if [[ -n "${label}" ]]; then
+    printf '%s %s\n' "${label}" "${value}"
+  else
+    printf '%s\n' "${value}"
+  fi
+}
+
+main() {
+  local cmd="${1:-}"
+
+  case "${cmd}" in
+    refresh) ram_refresh; return 0 ;;
+    popup)   ram_popup; return 0 ;;
+    doctor)  ram_doctor; return 0 ;;
+  esac
+
+  ram_tick
+
+  local out
+  out="$(ram_render_metric "${cmd}")"
+  if ram_is_labelled "${cmd}"; then
+    ram_labelled "${cmd}" "${out}"
+  elif [[ -n "${out}" ]]; then
+    printf '%s\n' "${out}"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

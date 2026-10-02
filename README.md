@@ -102,6 +102,29 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | `@ram_revamped_popup_height` | `60%` | popup height |
 | `@ram_revamped_enable_logging` | `0` | set to `1` to log under `~/.tmux/ram-revamped-logs` |
 
+## Labels
+
+Every value placeholder can carry a label, an icon or word printed before the value only when the value is not empty, so each figure on the bar says what it is. Set `@ram_revamped_<metric>_label` for one metric, or `@ram_revamped_icons` to `nerd` to label every metric from a Nerd Font set. A metric's own label wins over the set, and setting it to `''` removes the set's label for that metric. The default, `ascii`, adds no labels, so existing bars render unchanged.
+
+```tmux
+set -g @ram_revamped_icons 'nerd'
+set -g @ram_revamped_percentage_label ''
+```
+
+| Metric | `nerd` glyph |
+|--------|--------------|
+| `percentage` | `md-gauge` |
+| `available` | `md-memory` |
+| `swap` | `md-swap_vertical` |
+| `pressure` | `md-sine_wave` |
+| `breakdown` | `md-chart_donut` |
+| `absolute` | `md-database` |
+| `commit` | `md-sigma` |
+| `reclaimable` | `md-recycle` |
+| `top_process` | `md-application` |
+| `graph` | `md-chart_line_variant` |
+| `trend` | `md-trending_up` |
+
 ## Theme color suggestions
 
 The tier colors default to the 16 ANSI names, which the active theme remaps, so the plugin matches any theme out of the box; for exact hex copy one block below.
