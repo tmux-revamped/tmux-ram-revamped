@@ -251,3 +251,96 @@ teardown() {
 
   [[ "${output}" == "#[fg=red]" ]]
 }
+
+@test "ram.sh dispatcher - a width option pads the value on the left" {
+  set_tmux_option "@ram_revamped_percentage_width" "5"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "  42%" ]]
+}
+
+@test "ram.sh dispatcher - a value wider than the width is not cut" {
+  set_tmux_option "@ram_revamped_percentage_width" "2"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "42%" ]]
+}
+
+@test "ram.sh dispatcher - a non-numeric width adds no padding" {
+  set_tmux_option "@ram_revamped_percentage_width" "wide"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "42%" ]]
+}
+
+@test "ram.sh dispatcher - the padding sits between the label and the value" {
+  set_tmux_option "@ram_revamped_percentage_label" "X"
+  set_tmux_option "@ram_revamped_percentage_width" "5"
+
+  run ram_labelled percentage "42%"
+
+  [[ "${output}" == "X   42%" ]]
+}
+
+@test "ram dispatcher - fixed width pads a value to its widest form" {
+  set_tmux_option "@ram_revamped_fixed_width" "on"
+
+  run ram_labelled percentage "9%"
+
+  [[ "${output}" == "  9%" ]]
+}
+
+@test "ram dispatcher - natural widths cover the padded metrics" {
+  run bash -c 'source "$1"; for m in percentage available swap graph; do printf "%s=%s " "$m" "$(ram_natural_width "$m")"; done' _ "${BATS_TEST_DIRNAME}/../../../src/ram.sh"
+
+  [[ "${output}" == "percentage=4 available=4 swap=4 graph=0 " ]]
+}
+
+@test "ram dispatcher - publish writes every published metric in one batch" {
+  export PUBLISH_LOG="${TEST_TMPDIR}/publish.log"
+  _publish_tmux() { [[ "${1}" == "list-clients" ]] && return 0; printf '%s\n' "$@" > "${PUBLISH_LOG}"; }
+  ram_refresh() { return 0; }
+  ram_output() { printf 'v-%s' "${1}"; }
+  set_tmux_option "@ram_revamped_published" "alpha beta"
+
+  ram_publish
+
+  [[ "$(paste -sd'|' "${PUBLISH_LOG}")" == "set-option|-gq|@ram_revamped_out_alpha|v-alpha|;|set-option|-gq|@ram_revamped_out_beta|v-beta" ]]
+}
+
+@test "ram dispatcher - the daemon re-executes after the tick limit" {
+  ticker_run() { return 0; }
+  _ram_reexec() { echo "reexec" > "${TEST_TMPDIR}/reexec"; }
+
+  ram_daemon
+
+  [[ "$(cat "${TEST_TMPDIR}/reexec")" == "reexec" ]]
+}
+
+@test "ram dispatcher - the daemon stops when it loses ownership" {
+  ticker_run() { return 1; }
+  _ram_reexec() { echo "reexec" > "${TEST_TMPDIR}/reexec"; }
+
+  ram_daemon
+
+  [ ! -f "${TEST_TMPDIR}/reexec" ]
+}
+
+@test "ram dispatcher - main daemon runs the ticker" {
+  ram_daemon() { echo "daemon" > "${TEST_TMPDIR}/daemon"; }
+
+  main daemon
+
+  [[ "$(cat "${TEST_TMPDIR}/daemon")" == "daemon" ]]
+}
+
+@test "ram dispatcher - main start spawns the daemon" {
+  _ticker_spawn() { printf '%s' "${1}" > "${TEST_TMPDIR}/spawn"; }
+
+  main start
+
+  [[ "$(cat "${TEST_TMPDIR}/spawn")" == *"/src/ram.sh" ]]
+}

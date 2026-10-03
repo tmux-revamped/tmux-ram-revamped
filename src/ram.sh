@@ -20,6 +20,10 @@ source "${PLUGIN_DIR}/src/lib/tmux/tmux-ops.sh"
 # shellcheck source=/dev/null
 source "${PLUGIN_DIR}/src/lib/utils/cache.sh"
 # shellcheck source=/dev/null
+source "${PLUGIN_DIR}/src/lib/utils/publish.sh"
+# shellcheck source=/dev/null
+source "${PLUGIN_DIR}/src/lib/utils/ticker.sh"
+# shellcheck source=/dev/null
 source "${PLUGIN_DIR}/src/lib/ram/ram.sh"
 # shellcheck source=/dev/null
 source "${PLUGIN_DIR}/src/lib/ram/render.sh"
@@ -54,6 +58,8 @@ ram_tick() {
 ram_render_metric() {
   local cmd="${1}"
   case "${cmd}" in
+    start)   ticker_start "${PLUGIN_DIR}/src/ram.sh"; return 0 ;;
+    daemon)  ram_daemon; return 0 ;;
     percentage)  ram_render_percentage "$(cache_get percent)" ;;
     icon)        ram_render_icon "$(cache_get percent)" ;;
     fg_color)    ram_render_fg "$(cache_get percent)" ;;
@@ -112,14 +118,55 @@ ram_label() {
   fi
 }
 
+ram_natural_width() {
+  case "${1}" in
+    percentage) printf '4' ;;
+    available) printf '4' ;;
+    swap) printf '4' ;;
+    *) printf '0' ;;
+  esac
+}
+
+ram_padded() {
+  publish_pad "${2}" "$(publish_width ram_revamped "${1}" "$(ram_natural_width "${1}")")"
+}
+
 ram_labelled() {
   local metric="${1}" value="${2}" label
   [[ -n "${value}" ]] || return 0
+  value="$(ram_padded "${metric}" "${value}")"
   label="$(ram_label "${metric}")"
   if [[ -n "${label}" ]]; then
     printf '%s %s\n' "${label}" "${value}"
   else
     printf '%s\n' "${value}"
+  fi
+}
+
+ram_output() {
+  local metric="${1}" out
+  out="$(ram_render_metric "${metric}")"
+  if ram_is_labelled "${metric}"; then
+    ram_labelled "${metric}" "${out}"
+  elif [[ -n "${out}" ]]; then
+    printf '%s\n' "${out}"
+  fi
+}
+
+ram_publish() {
+  local metric
+  ram_refresh
+  for metric in $(get_tmux_option "@ram_revamped_published" ""); do
+    publish_add "@ram_revamped_out_${metric}" "$(ram_output "${metric}")"
+  done
+  publish_commit
+}
+
+_ram_reexec() { exec "${PLUGIN_DIR}/src/ram.sh" daemon; }
+
+ram_daemon() {
+  if ticker_run ram_revamped ram_publish "$$"; then
+    _ram_reexec
   fi
 }
 
@@ -133,14 +180,7 @@ main() {
   esac
 
   ram_tick
-
-  local out
-  out="$(ram_render_metric "${cmd}")"
-  if ram_is_labelled "${cmd}"; then
-    ram_labelled "${cmd}" "${out}"
-  elif [[ -n "${out}" ]]; then
-    printf '%s\n' "${out}"
-  fi
+  ram_output "${cmd}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
