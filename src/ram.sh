@@ -58,8 +58,6 @@ ram_tick() {
 ram_render_metric() {
   local cmd="${1}"
   case "${cmd}" in
-    start)   ticker_start "${PLUGIN_DIR}/src/ram.sh"; return 0 ;;
-    daemon)  ram_daemon; return 0 ;;
     percentage)  ram_render_percentage "$(cache_get percent)" ;;
     icon)        ram_render_icon "$(cache_get percent)" ;;
     fg_color)    ram_render_fg "$(cache_get percent)" ;;
@@ -174,6 +172,8 @@ main() {
   local cmd="${1:-}"
 
   case "${cmd}" in
+    start) ticker_start "${PLUGIN_DIR}/src/ram.sh"; return 0 ;;
+    daemon) ram_daemon; return 0 ;;
     refresh) ram_refresh; return 0 ;;
     popup)   ram_popup; return 0 ;;
     doctor)  ram_doctor; return 0 ;;

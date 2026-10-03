@@ -344,3 +344,11 @@ teardown() {
 
   [[ "$(cat "${TEST_TMPDIR}/spawn")" == *"/src/ram.sh" ]]
 }
+
+@test "ram dispatcher - the metric renderer does not start the daemon" {
+  ram_daemon() { echo "daemon" > "${TEST_TMPDIR}/daemon"; }
+
+  ram_render_metric daemon >/dev/null
+
+  [ ! -f "${TEST_TMPDIR}/daemon" ]
+}
