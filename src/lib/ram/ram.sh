@@ -31,7 +31,16 @@ ram_pct_from_meminfo() {
 
 # _vmstat_pages TEXT LABEL -> the page count for a vm_stat label.
 _vmstat_pages() {
-  printf '%s\n' "${1}" | grep -i "${2}" | grep -oE '[0-9]+' | head -1
+  local line had_nocasematch=0
+  shopt -q nocasematch && had_nocasematch=1
+  shopt -s nocasematch
+  while IFS= read -r line; do
+    if [[ "${line}" == *"${2}"* && "${line}" =~ ([0-9]+) ]]; then
+      printf '%s\n' "${BASH_REMATCH[1]}"
+      break
+    fi
+  done <<<"${1}"
+  ((had_nocasematch)) || shopt -u nocasematch
 }
 
 # ram_pct_from_vmstat TEXT -> integer used-memory percent from vm_stat.

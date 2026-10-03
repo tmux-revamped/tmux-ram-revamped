@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `@ram_revamped_render 'options'` replaces the `#()` calls with tmux option
   reads, written by one background process per server every
-  `status-interval` seconds. tmux reruns a `#()` call on every redraw, so a
+  `@ram_revamped_interval` seconds, 5 by default. tmux reruns a `#()` call on every redraw, so a
   shared bar ran each one about once a second and painted values one by one.
 - `@ram_revamped_fixed_width 'on'` pads each value to its widest form, and
   `@ram_revamped_<metric>_width` sets one metric's width, so a value changing
@@ -19,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Metric labels. `@ram_revamped_<metric>_label` prints an icon or word before a
   value only when the value is not empty, and `@ram_revamped_icons` set to
   `nerd` labels every metric from a Nerd Font set. The default adds no labels.
+
+### Changed
+
+- The options-mode background process reads every option it needs in one tmux
+  call per tick, sends its cache writes and published values in a second, and
+  keeps its functions out of the environment of the commands it runs. vm_stat
+  fields are read in bash instead of a grep pipeline per field, which started
+  about 36 processes per sample. Pressure, breakdown, absolute, commit,
+  reclaimable and top process refresh every `@ram_revamped_detail_interval`
+  seconds, 60 by default.
 
 ### Fixed
 

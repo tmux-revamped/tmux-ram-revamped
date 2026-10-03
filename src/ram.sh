@@ -38,16 +38,20 @@ ram_max_age() {
   get_tmux_option "@ram_revamped_interval" "5"
 }
 
+ram_detail_age() {
+  get_tmux_option "@ram_revamped_detail_interval" "60"
+}
+
 ram_refresh() {
   cache_set percent "$(read_ram_percentage)"
   cache_set available "$(read_available)"
   cache_set swap "$(read_swap)"
-  cache_set pressure "$(read_pressure)"
-  cache_set breakdown "$(read_breakdown)"
-  cache_set absolute "$(read_absolute)"
-  cache_set commit "$(read_commit)"
-  cache_set reclaimable "$(read_reclaimable)"
-  cache_set top_process "$(read_top_process)"
+  cache_set_if_stale pressure "$(ram_detail_age)" read_pressure
+  cache_set_if_stale breakdown "$(ram_detail_age)" read_breakdown
+  cache_set_if_stale absolute "$(ram_detail_age)" read_absolute
+  cache_set_if_stale commit "$(ram_detail_age)" read_commit
+  cache_set_if_stale reclaimable "$(ram_detail_age)" read_reclaimable
+  cache_set_if_stale top_process "$(ram_detail_age)" read_top_process
   ram_history_push "$(cache_get percent)"
 }
 
@@ -163,7 +167,7 @@ ram_publish() {
 _ram_reexec() { exec "${PLUGIN_DIR}/src/ram.sh" daemon; }
 
 ram_daemon() {
-  if ticker_run ram_revamped ram_publish "$$"; then
+  if ticker_run ram_revamped ram_publish "$$" 5; then
     _ram_reexec
   fi
 }

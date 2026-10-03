@@ -203,3 +203,23 @@ teardown() {
   run _read_memory_pressure_macos
   true
 }
+
+@test "ram.sh - _vmstat_pages matches the label in any case" {
+  run _vmstat_pages $'Pages free:      12.\nPages active:   34.' "PAGES ACTIVE"
+
+  [[ "${output}" == "34" ]]
+}
+
+@test "ram.sh - _vmstat_pages is empty for a missing label" {
+  run _vmstat_pages $'Pages free:      12.' "Pages wired down"
+
+  [[ -z "${output}" ]]
+}
+
+@test "ram.sh - _vmstat_pages leaves case-insensitive matching off afterwards" {
+  _vmstat_pages $'Pages free:      12.' "pages free" >/dev/null
+
+  run shopt -q nocasematch
+
+  [ "${status}" -eq 1 ]
+}

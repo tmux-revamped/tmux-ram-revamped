@@ -352,3 +352,22 @@ teardown() {
 
   [ ! -f "${TEST_TMPDIR}/daemon" ]
 }
+
+@test "ram dispatcher - a detail probe keeps its cache inside the detail interval" {
+  ram_refresh
+  read_top_process() { echo "probed" > "${TEST_TMPDIR}/probed"; echo "fresh"; }
+
+  ram_refresh
+
+  [ ! -f "${TEST_TMPDIR}/probed" ]
+}
+
+@test "ram dispatcher - a detail probe runs again after the detail interval" {
+  ram_refresh
+  read_top_process() { echo "fresh"; }
+  export MOCK_EPOCH=$(( MOCK_EPOCH + 61 ))
+
+  ram_refresh
+
+  [[ "$(cache_get top_process)" == "fresh" ]]
+}
