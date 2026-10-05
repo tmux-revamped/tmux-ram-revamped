@@ -138,12 +138,13 @@ teardown() {
   [[ -z "$(psi_from_text "")" ]]
 }
 
-@test "ram.sh - pressure_from_macos returns the complement of the free percentage" {
-  [[ "$(pressure_from_macos 'System-wide memory free percentage: 43%')" == "57" ]]
+@test "ram.sh - pressure_from_vmstat is the wired plus compressed share" {
+  local txt=$'Pages free: 10.\nPages active: 30.\nPages wired down: 40.\nPages occupied by compressor: 20.'
+  [[ "$(pressure_from_vmstat "${txt}")" == "60" ]]
 }
 
-@test "ram.sh - pressure_from_macos is empty without the line" {
-  [[ -z "$(pressure_from_macos "")" ]]
+@test "ram.sh - pressure_from_vmstat is zero without pages" {
+  [[ "$(pressure_from_vmstat "")" == "0" ]]
 }
 
 @test "ram.sh - read_pressure reads PSI on Linux" {
@@ -152,14 +153,14 @@ teardown() {
   [[ "$(read_pressure)" == "5" ]]
 }
 
-@test "ram.sh - read_pressure reads memory_pressure on macOS" {
+@test "ram.sh - read_pressure is the wired plus compressed share on macOS" {
   _PLATFORM_OS_CACHE="Darwin"
   has_command() { return 0; }
-  _read_memory_pressure_macos() { printf 'System-wide memory free percentage: 60%%\n'; }
-  [[ "$(read_pressure)" == "40" ]]
+  _read_vmstat() { printf 'Pages free: 10.\nPages active: 30.\nPages wired down: 40.\nPages occupied by compressor: 20.\n'; }
+  [[ "$(read_pressure)" == "60" ]]
 }
 
-@test "ram.sh - read_pressure is empty on macOS without memory_pressure" {
+@test "ram.sh - read_pressure is empty on macOS without vm_stat" {
   _PLATFORM_OS_CACHE="Darwin"
   has_command() { return 1; }
   [[ -z "$(read_pressure)" ]]
@@ -200,7 +201,6 @@ teardown() {
   run _read_swapusage
   run _read_pagesize
   run _read_psi_memory
-  run _read_memory_pressure_macos
   true
 }
 

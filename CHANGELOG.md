@@ -37,10 +37,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `#{ram_pressure}` on macOS reported the free-memory percent from
-  `memory_pressure`, so a higher number meant less pressure, inverted from the
-  Linux PSI reading. It now reports the complement, 100 minus free, so a higher
-  number means more pressure on both platforms. The default `nerd` glyph for the
-  metric is now `U+F0F86`.
+  `memory_pressure`, which tracked free memory rather than pressure and read
+  higher as memory freed. It now reports the wired-plus-compressed share of
+  memory from `vm_stat`, the unreclaimable and compressed pages that Activity
+  Monitor and iStat track, so a higher number means more pressure, matching the
+  Linux PSI reading. The default `nerd` glyph for the metric is now `U+F0F86`.
 - In options mode, running the entry point a second time, as two overlapping
   config reloads do, found no placeholders left in the status line and
   published nothing, which froze every value. A metric whose option read is

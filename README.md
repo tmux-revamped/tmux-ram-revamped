@@ -196,10 +196,11 @@ and match Activity Monitor; on Linux they map to buffers, zero, cached, and free
 
 The `#{ram_pressure}` placeholder reports a memory-pressure metric. On Linux it
 is the `some avg10` value from `/proc/pressure/memory`, the percent of time
-memory was stalled in the last ten seconds. On macOS it is 100 minus the free
-percent reported by the native `memory_pressure` tool, so a higher number means
-more pressure on both platforms. The placeholder is empty when the source is
-unavailable.
+memory was stalled in the last ten seconds. On macOS it is the wired-plus-
+compressed share of memory from `vm_stat`, the pages that cannot be reclaimed
+plus the pages already compressed under stress, which is the signal Activity
+Monitor and iStat track. A higher number means more pressure on both platforms.
+The placeholder is empty when the source is unavailable.
 
 ## Support by platform and architecture
 

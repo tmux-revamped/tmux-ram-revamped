@@ -145,16 +145,27 @@ psi_from_text() {
   printf '%s\n' "${1}" | LC_ALL=C awk '/^some / { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub(/^avg10=/, "", $i); printf "%.0f", $i; exit } }'
 }
 
-# pressure_from_macos TEXT -> integer memory-pressure percent from
-# `memory_pressure`. The tool reports free memory percent; pressure is its
-# complement (100 - free), so higher means more pressure, matching Linux PSI.
-pressure_from_macos() {
-  printf '%s\n' "${1}" | awk '/free percentage:/ { for (i = 1; i <= NF; i++) if ($i ~ /%/) { gsub(/[^0-9]/, "", $i); printf "%d", 100 - $i; exit } }'
+# pressure_from_vmstat TEXT -> integer memory-pressure percent from vm_stat,
+# the wired-plus-compressed share of memory. Wired pages cannot be reclaimed and
+# compressed pages are memory already under stress, which is what Activity Monitor
+# and iStat track, so a higher number means more pressure, matching Linux PSI.
+pressure_from_vmstat() {
+  local free active inactive spec wired compressed
+  free=$(_vmstat_pages "${1}" "Pages free")
+  active=$(_vmstat_pages "${1}" "Pages active")
+  inactive=$(_vmstat_pages "${1}" "Pages inactive")
+  spec=$(_vmstat_pages "${1}" "Pages speculative")
+  wired=$(_vmstat_pages "${1}" "Pages wired down")
+  compressed=$(_vmstat_pages "${1}" "occupied by compressor")
+  free=${free:-0}; active=${active:-0}; inactive=${inactive:-0}
+  spec=${spec:-0}; wired=${wired:-0}; compressed=${compressed:-0}
+  local total=$(( free + active + inactive + spec + wired + compressed ))
+  (( total <= 0 )) && { echo 0; return 0; }
+  LC_ALL=C awk -v w="${wired}" -v c="${compressed}" -v t="${total}" 'BEGIN { printf "%.0f", ((w + c) / t) * 100 }'
 }
 
 _read_swapusage() { sysctl vm.swapusage 2>/dev/null; }
 _read_psi_memory() { cat /proc/pressure/memory 2>/dev/null; }
-_read_memory_pressure_macos() { memory_pressure 2>/dev/null; }
 
 # read_available -> available-memory percent for the host.
 read_available() {
@@ -182,8 +193,8 @@ read_swap() {
 read_pressure() {
   if is_linux; then
     psi_from_text "$(_read_psi_memory)"
-  elif is_macos && has_command memory_pressure; then
-    pressure_from_macos "$(_read_memory_pressure_macos)"
+  elif is_macos && has_command vm_stat; then
+    pressure_from_vmstat "$(_read_vmstat)"
   fi
 }
 
@@ -197,7 +208,7 @@ export -f swap_from_meminfo
 export -f swap_from_sysctl
 export -f swap_pct
 export -f psi_from_text
-export -f pressure_from_macos
+export -f pressure_from_vmstat
 export -f breakdown_from_vmstat
 export -f breakdown_from_meminfo
 export -f _read_meminfo
@@ -205,7 +216,6 @@ export -f _read_vmstat
 export -f _read_pagesize
 export -f _read_swapusage
 export -f _read_psi_memory
-export -f _read_memory_pressure_macos
 export -f read_ram_percentage
 export -f read_available
 export -f read_swap

@@ -36,7 +36,7 @@ ram_doctor() {
     echo "source: none (unsupported platform)"
   fi
   _doctor_probe "swap" "vm_stat"
-  _doctor_probe "pressure" "memory_pressure"
+  _doctor_probe "pressure" "vm_stat"
   _doctor_probe "top process" "ps"
   _doctor_probe "popup monitor" "btop"
 }
