@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `#{ram_pressure_fg_color}` colors the pressure metric by the same low, medium,
+  and high thresholds as RAM usage, so pressure follows the tier palette like the
+  other values.
+
 - `@ram_revamped_render 'options'` replaces the `#()` calls with tmux option
   reads, written by one background process per server every
   `@ram_revamped_interval` seconds, 5 by default. tmux reruns a `#()` call on every redraw, so a
@@ -32,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `#{ram_pressure}` on macOS reported the free-memory percent from
+  `memory_pressure`, so a higher number meant less pressure, inverted from the
+  Linux PSI reading. It now reports the complement, 100 minus free, so a higher
+  number means more pressure on both platforms. The default `nerd` glyph for the
+  metric is now `U+F0F86`.
 - In options mode, running the entry point a second time, as two overlapping
   config reloads do, found no placeholders left in the status line and
   published nothing, which froze every value. A metric whose option read is

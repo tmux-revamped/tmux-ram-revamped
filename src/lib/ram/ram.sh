@@ -145,9 +145,11 @@ psi_from_text() {
   printf '%s\n' "${1}" | LC_ALL=C awk '/^some / { for (i = 1; i <= NF; i++) if ($i ~ /^avg10=/) { sub(/^avg10=/, "", $i); printf "%.0f", $i; exit } }'
 }
 
-# pressure_from_macos TEXT -> integer free percent from `memory_pressure`.
+# pressure_from_macos TEXT -> integer memory-pressure percent from
+# `memory_pressure`. The tool reports free memory percent; pressure is its
+# complement (100 - free), so higher means more pressure, matching Linux PSI.
 pressure_from_macos() {
-  printf '%s\n' "${1}" | awk '/free percentage:/ { for (i = 1; i <= NF; i++) if ($i ~ /%/) { gsub(/[^0-9]/, "", $i); printf "%s", $i; exit } }'
+  printf '%s\n' "${1}" | awk '/free percentage:/ { for (i = 1; i <= NF; i++) if ($i ~ /%/) { gsub(/[^0-9]/, "", $i); printf "%d", 100 - $i; exit } }'
 }
 
 _read_swapusage() { sysctl vm.swapusage 2>/dev/null; }

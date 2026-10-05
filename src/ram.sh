@@ -71,6 +71,7 @@ ram_render_metric() {
     swap_icon)   ram_render_swap_icon "$(cache_get swap)" ;;
     swap_color)  ram_render_swap_color "$(cache_get swap)" ;;
     pressure)    ram_render_pressure "$(cache_get pressure)" ;;
+    pressure_fg_color) ram_render_fg "$(cache_get pressure)" ;;
     breakdown)   ram_render_breakdown "$(cache_get breakdown)" ;;
     absolute)    ram_render_absolute "$(cache_get absolute)" ;;
     commit)      ram_render_commit "$(cache_get commit)" ;;
@@ -95,7 +96,7 @@ ram_nerd_label() {
     percentage) printf '\xf3\xb0\x8a\x9a' ;;
     available) printf '\xf3\xb0\x8d\x9b' ;;
     swap) printf '\xf3\xb0\xbe\xb4' ;;
-    pressure) printf '\xf3\xb0\xa5\x9b' ;;
+    pressure) printf '\xf3\xb0\xbe\x86' ;;
     breakdown) printf '\xf3\xb0\x9e\xaf' ;;
     absolute) printf '\xf3\xb0\x86\xbc' ;;
     commit) printf '\xf3\xb0\x92\xa0' ;;

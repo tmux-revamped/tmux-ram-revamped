@@ -138,8 +138,8 @@ teardown() {
   [[ -z "$(psi_from_text "")" ]]
 }
 
-@test "ram.sh - pressure_from_macos extracts the free percentage" {
-  [[ "$(pressure_from_macos 'System-wide memory free percentage: 43%')" == "43" ]]
+@test "ram.sh - pressure_from_macos returns the complement of the free percentage" {
+  [[ "$(pressure_from_macos 'System-wide memory free percentage: 43%')" == "57" ]]
 }
 
 @test "ram.sh - pressure_from_macos is empty without the line" {
@@ -156,7 +156,7 @@ teardown() {
   _PLATFORM_OS_CACHE="Darwin"
   has_command() { return 0; }
   _read_memory_pressure_macos() { printf 'System-wide memory free percentage: 60%%\n'; }
-  [[ "$(read_pressure)" == "60" ]]
+  [[ "$(read_pressure)" == "40" ]]
 }
 
 @test "ram.sh - read_pressure is empty on macOS without memory_pressure" {

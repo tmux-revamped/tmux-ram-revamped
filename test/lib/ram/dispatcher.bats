@@ -58,6 +58,12 @@ teardown() {
   [[ "${output}" == "12%" ]]
 }
 
+@test "ram.sh dispatcher - pressure_fg_color maps the cached pressure to a tier color" {
+  set_tmux_option "@ram_revamped_low_fg_color" "#[fg=green]"
+  run main pressure_fg_color
+  [[ "${output}" == "#[fg=green]" ]]
+}
+
 @test "ram.sh dispatcher - breakdown subcommand renders the cache" {
   run main breakdown
   [[ "${output}" == "W 2.0G C 1.0G I 3.0G F 4.0G" ]]

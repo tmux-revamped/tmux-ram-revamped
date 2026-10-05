@@ -35,7 +35,8 @@ Inspired by the RAM metrics in [tmux-cpu](https://github.com/tmux-plugins/tmux-c
 | `#{ram_bg_color}` | background color for the current tier |
 | `#{ram_available}` | available memory percent, for example `40%` |
 | `#{ram_swap}` | swap used percent, empty when there is no swap |
-| `#{ram_pressure}` | memory-pressure metric, for example `2%` |
+| `#{ram_pressure}` | memory-pressure percent, higher means more pressure, for example `36%` |
+| `#{ram_pressure_fg_color}` | foreground color for the pressure tier, by the usage thresholds |
 | `#{ram_breakdown}` | memory composition, for example `W 3.2G C 1.1G I 2.0G F 4.5G` |
 | `#{ram_swap_icon}` | warning icon shown while swap is in use |
 | `#{ram_swap_color}` | warning color shown while swap is in use |
@@ -128,7 +129,7 @@ set -g @ram_revamped_percentage_label ''
 | `percentage` | `md-gauge` |
 | `available` | `md-memory` |
 | `swap` | `md-file_swap` |
-| `pressure` | `md-sine_wave` |
+| `pressure` | `U+F0F86` |
 | `breakdown` | `md-chart_donut` |
 | `absolute` | `md-database` |
 | `commit` | `md-sigma` |
@@ -195,9 +196,10 @@ and match Activity Monitor; on Linux they map to buffers, zero, cached, and free
 
 The `#{ram_pressure}` placeholder reports a memory-pressure metric. On Linux it
 is the `some avg10` value from `/proc/pressure/memory`, the percent of time
-memory was stalled in the last ten seconds. On macOS it is the free percent
-reported by the native `memory_pressure` tool. The placeholder is empty when the
-source is unavailable.
+memory was stalled in the last ten seconds. On macOS it is 100 minus the free
+percent reported by the native `memory_pressure` tool, so a higher number means
+more pressure on both platforms. The placeholder is empty when the source is
+unavailable.
 
 ## Support by platform and architecture
 
