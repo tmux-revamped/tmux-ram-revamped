@@ -42,6 +42,10 @@ ram_detail_age() {
   get_tmux_option "@ram_revamped_detail_interval" "60"
 }
 
+ram_read_top_process_escaped() {
+  publish_escape "$(read_top_process)"
+}
+
 ram_refresh() {
   cache_set percent "$(read_ram_percentage)"
   cache_set available "$(read_available)"
@@ -51,7 +55,7 @@ ram_refresh() {
   cache_set_if_stale absolute "$(ram_detail_age)" read_absolute
   cache_set_if_stale commit "$(ram_detail_age)" read_commit
   cache_set_if_stale reclaimable "$(ram_detail_age)" read_reclaimable
-  cache_set_if_stale top_process "$(ram_detail_age)" read_top_process
+  cache_set_if_stale top_process "$(ram_detail_age)" ram_read_top_process_escaped
   ram_history_push "$(cache_get percent)"
 }
 

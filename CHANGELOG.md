@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The top process name from `ps`, which any user on the machine controls,
+  reached the status line as a tmux format, so a process named `#(...)` ran a
+  command. Every `#` in the name is now doubled before tmux sees it.
 - `#{ram_pressure}` on macOS reported the free-memory percent from
   `memory_pressure`, which tracked free memory rather than pressure and read
   higher as memory freed. It now reports the wired-plus-compressed share of

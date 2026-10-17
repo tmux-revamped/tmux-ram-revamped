@@ -131,6 +131,17 @@ teardown() {
   [[ "${output}" == "4G" ]]
 }
 
+@test "ram.sh dispatcher - a process name cannot inject a tmux format" {
+  # Arrange
+  read_top_process() { echo "evil#(touch x)#[fg=red] 2048"; }
+
+  # Act
+  ram_refresh
+
+  # Assert
+  [[ "$(cache_get top_process)" == "evil##(touch x)##[fg=red] 2048" ]]
+}
+
 @test "ram.sh dispatcher - top_process subcommand renders the cache" {
   ram_refresh
   run main top_process
