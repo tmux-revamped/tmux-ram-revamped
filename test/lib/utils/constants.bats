@@ -11,10 +11,15 @@ teardown() {
 }
 
 @test "constants.sh - exposes the plugin version" {
+  # Arrange
   unset _TMUX_PLUGIN_CONSTANTS_LOADED
+
+  # Act
   source "${BATS_TEST_DIRNAME}/../../../src/lib/utils/constants.sh"
-  [[ "${RAM_REVAMPED_VERSION}" == "1.3.0" ]]
-  [[ -n "${TMUX_PLUGIN_DEFAULT_MAX_AGE}" ]]
+
+  # Assert
+  [[ "${RAM_REVAMPED_VERSION}" == "2.0.0" ]] || false
+  [[ -n "${TMUX_PLUGIN_DEFAULT_MAX_AGE}" ]] || false
   [[ "${TMUX_PLUGIN_PENDING}" == "..." ]]
 }
 
