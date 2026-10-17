@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `@ram_revamped_popup_key` could not be turned off: an empty value fell back
+  to `M`, so the popup always claimed a prefix key. Setting it to `off` now
+  binds nothing, and the default stays `M`.
 - The top process name from `ps`, which any user on the machine controls,
   reached the status line as a tmux format, so a process named `#(...)` ran a
   command. Every `#` in the name is now doubled before tmux sees it.

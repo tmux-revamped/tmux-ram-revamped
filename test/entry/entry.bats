@@ -65,3 +65,36 @@ teardown() {
 
   [[ "$(cat "$(_mock_opt_file @ram_revamped_published)")" == "percentage" ]]
 }
+
+record_bind_keys() {
+  eval "$(declare -f tmux | sed '1s/^tmux/_mock_tmux/')"
+  export BIND_LOG="${TEST_TMPDIR}/bind.log"
+  tmux() {
+    [[ "${1}" == "bind-key" ]] && printf '%s\n' "$*" >>"${BIND_LOG}"
+    _mock_tmux "$@"
+  }
+  export -f tmux _mock_tmux
+}
+
+@test "entry - the popup key defaults to M" {
+  # Arrange
+  record_bind_keys
+
+  # Act
+  bash "${ENTRY}"
+
+  # Assert
+  [[ "$(cat "${BIND_LOG}")" == "bind-key M run-shell "*"/src/ram.sh popup" ]]
+}
+
+@test "entry - a popup key of off binds nothing" {
+  # Arrange
+  record_bind_keys
+  tmux set-option -gq "@ram_revamped_popup_key" "off"
+
+  # Act
+  bash "${ENTRY}"
+
+  # Assert
+  [ ! -e "${BIND_LOG}" ]
+}

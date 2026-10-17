@@ -98,7 +98,7 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | `@ram_revamped_swap_warn_thresh` | `1` | swap percent at or above which the warning shows |
 | `@ram_revamped_swap_active_icon` | empty | icon shown by `#{ram_swap_icon}` while swap is active |
 | `@ram_revamped_swap_active_color` | empty | color shown by `#{ram_swap_color}` while swap is active |
-| `@ram_revamped_popup_key` | `M` | prefix key that opens the detail popup |
+| `@ram_revamped_popup_key` | `M` | prefix key that opens the detail popup; set `off` to bind nothing |
 | `@ram_revamped_popup_width` | `80%` | popup width |
 | `@ram_revamped_popup_height` | `60%` | popup height |
 | `@ram_revamped_enable_logging` | `0` | set to `1` to log under `~/.tmux/ram-revamped-logs` |
