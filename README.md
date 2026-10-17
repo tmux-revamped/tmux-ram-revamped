@@ -8,7 +8,7 @@
 
 </div>
 
-**17** placeholders · **2** platforms · **202** tests · **95%+** coverage
+**2** platforms · **95%+** coverage
 
 Shows RAM usage, available memory, swap, and a memory breakdown in your tmux status bar. The value is read from a tmux server user-option and returns instantly, while a detached worker recomputes it in the background. No temp files are used; all state lives in tmux options.
 
@@ -21,7 +21,7 @@ Inspired by the RAM metrics in [tmux-cpu](https://github.com/tmux-plugins/tmux-c
 </tr>
 <tr>
 <td><b>Cross-platform</b><br>Runs on Linux and macOS, Intel and Apple Silicon, with built-in tools only.</td>
-<td><b>Tested</b><br>112 tests with 95%+ coverage on every supported platform.</td>
+<td><b>Tested</b><br>95%+ coverage on every supported platform.</td>
 </tr>
 </table>
 
@@ -37,7 +37,7 @@ Inspired by the RAM metrics in [tmux-cpu](https://github.com/tmux-plugins/tmux-c
 | `#{ram_swap}` | swap used percent, empty when there is no swap |
 | `#{ram_pressure}` | memory-pressure percent, higher means more pressure, for example `36%` |
 | `#{ram_pressure_fg_color}` | foreground color for the pressure tier, by the usage thresholds |
-| `#{ram_breakdown}` | memory composition, for example `W 3.2G C 1.1G I 2.0G F 4.5G` |
+| `#{ram_breakdown}` | memory composition, for example `W 3.2G C 1.1G I 2.0G F 4.5G`; on Linux the four slots hold buffers, zero, cached, and free |
 | `#{ram_swap_icon}` | warning icon shown while swap is in use |
 | `#{ram_swap_color}` | warning color shown while swap is in use |
 | `#{ram_absolute}` | absolute used over total, for example `12.3G / 32G` |
@@ -85,7 +85,7 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | `@ram_revamped_available_format` | `%s%%` | format for available memory |
 | `@ram_revamped_swap_format` | `%s%%` | format for swap usage |
 | `@ram_revamped_pressure_format` | `%s%%` | format for the memory-pressure metric |
-| `@ram_revamped_breakdown_format` | `W %sG C %sG I %sG F %sG` | format for the memory breakdown (four values: wired, compressed, inactive, free) |
+| `@ram_revamped_breakdown_format` | `W %sG C %sG I %sG F %sG` | format for the memory breakdown (four values: wired, compressed, inactive, free on macOS; buffers, zero, cached, free on Linux) |
 | `@ram_revamped_absolute_format` | `%s / %s` | format for absolute used over total |
 | `@ram_revamped_commit_format` | `%s%%` | format for the commit ratio |
 | `@ram_revamped_reclaimable_format` | `%s` | format for the reclaimable cache figure |
@@ -190,9 +190,12 @@ set -g @ram_revamped_medium_fg_color '#[fg=#b58900]'
 set -g @ram_revamped_high_fg_color '#[fg=#dc322f]'
 ```
 
-The `#{ram_breakdown}` placeholder reports the memory composition: wired,
-compressed, inactive, and free in gigabytes. On macOS these come from `vm_stat`
-and match Activity Monitor; on Linux they map to buffers, zero, cached, and free.
+The `#{ram_breakdown}` placeholder reports the memory composition in gigabytes.
+On macOS the four values are wired, compressed, inactive, and free from
+`vm_stat`, matching Activity Monitor. Linux has no wired or compressed counts, so
+the same four slots hold buffers, zero, cached, and free from `/proc/meminfo`;
+with the default format the `W` figure is buffers and the `I` figure is the page
+cache.
 
 The `#{ram_pressure}` placeholder reports a memory-pressure metric. On Linux it
 is the `some avg10` value from `/proc/pressure/memory`, the percent of time
