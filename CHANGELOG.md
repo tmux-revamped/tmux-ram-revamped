@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Switching from options mode back to jobs mode left the background process
+  running. Jobs mode now releases it, and it exits on its next tick.
+
 ## [2.0.0] - 2026-10-17
 
 ### Added

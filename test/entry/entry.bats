@@ -98,3 +98,15 @@ record_bind_keys() {
   # Assert
   [ ! -e "${BIND_LOG}" ]
 }
+
+@test "entry - jobs mode releases a running ticker so the daemon exits" {
+  # Arrange
+  tmux set-option -gq "@ram_revamped_ticker_pid" "4242"
+  tmux set-option -gq "status-right" "[#{ram_percentage}]"
+
+  # Act
+  bash "${ENTRY}"
+
+  # Assert
+  [ ! -f "$(_mock_opt_file @ram_revamped_ticker_pid)" ]
+}

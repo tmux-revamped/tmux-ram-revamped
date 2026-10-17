@@ -104,5 +104,7 @@ update_option "status-right"
 
 if [[ "${render_mode}" == "options" ]]; then
   "${RAM_CMD}" start 2>/dev/null || true
+else
+  tmux set-option -gqu "@ram_revamped_ticker_pid"
 fi
 bind_popup
