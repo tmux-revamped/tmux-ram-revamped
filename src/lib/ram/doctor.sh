@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-# doctor.sh: capability report.
-#
-# Explains which platform was detected, which source feeds each metric, and
-# which optional tools are present. It probes only command availability and the
-# OS; it never executes a monitor.
 
 [[ -n "${_RAM_REVAMPED_DOCTOR_LOADED:-}" ]] && return 0
 _RAM_REVAMPED_DOCTOR_LOADED=1
@@ -15,7 +9,6 @@ source "${_RAM_DOCTOR_DIR}/../utils/has-command.sh"
 # shellcheck source=/dev/null
 source "${_RAM_DOCTOR_DIR}/../utils/platform.sh"
 
-# _doctor_probe LABEL COMMAND -> one line stating whether COMMAND is on PATH.
 _doctor_probe() {
   if has_command "${2}"; then
     echo "${1}: ${2} found"
@@ -36,7 +29,6 @@ _doctor_file() {
   fi
 }
 
-# ram_doctor -> print the capability report to stdout.
 ram_doctor() {
   echo "tmux-ram-revamped doctor"
   echo "platform: $(platform_os)"

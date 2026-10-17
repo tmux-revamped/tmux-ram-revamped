@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-#
-# render.sh: map cached RAM values to icons, colors, and formatted text.
 
 [[ -n "${_RAM_REVAMPED_RENDER_LOADED:-}" ]] && return 0
 _RAM_REVAMPED_RENDER_LOADED=1
@@ -9,7 +7,6 @@ _RAM_RENDER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "${_RAM_RENDER_DIR}/../tmux/tmux-ops.sh"
 
-# _ram_level VALUE MEDIUM HIGH -> low|medium|high by integer thresholds.
 _ram_level() {
   local v="${1%%.*}" med="${2}" high="${3}"
   [[ "${v}" =~ ^-?[0-9]+$ ]] || v=0
@@ -104,9 +101,6 @@ export -f ram_render_pressure
 export -f _ram_mb_to_gb
 export -f ram_render_breakdown
 
-# --- Absolute, commit, reclaimable, top-process, graph, trend, text ----------
-
-# _ram_kb_human KB -> a compact human size, auto-scaled to K/M/G.
 _ram_kb_human() {
   LC_ALL=C awk -v k="${1:-0}" 'BEGIN{if(k>=1048576){v=k/1048576;u="G"}else if(k>=1024){v=k/1024;u="M"}else{v=k;u="K"} if(v==int(v)) printf "%d%s",v,u; else printf "%.1f%s",v,u}'
 }
@@ -195,7 +189,6 @@ ram_render_text() {
   printf '%s' "${out}"
 }
 
-# _ram_swap_active VALUE -> 0 when swap usage is at or above the warn threshold.
 _ram_swap_active() {
   local v="${1%%.*}" thresh
   [[ "${v}" =~ ^[0-9]+$ ]] || v=0

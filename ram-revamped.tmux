@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-# ram-revamped.tmux: TPM entry point.
-#
-# Replaces the #{ram_*} placeholders in status-left and status-right with calls
-# to the dispatcher, which reads cached values and never blocks the render.
-# Also binds a key to open the detail popup.
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RAM_CMD="${PLUGIN_DIR}/src/ram.sh"

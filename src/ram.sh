@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-# ram.sh: command dispatcher for tmux-ram-revamped.
-#
-# Usage:
-#   ram.sh percentage | icon | fg_color | bg_color
-#   ram.sh refresh
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
