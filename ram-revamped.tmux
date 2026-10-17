@@ -95,7 +95,7 @@ update_option() {
 bind_popup() {
   local key
   key=$(tmux show-option -gqv "@ram_revamped_popup_key")
-  [[ -z "${key}" ]] && key="M"
+  [[ -z "${key}" ]] && key="M-r"
   [[ "${key}" == "off" ]] && return 0
   tmux bind-key "${key}" run-shell "${RAM_CMD} popup"
 }

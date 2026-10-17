@@ -4,7 +4,7 @@
 
 **RAM usage for your tmux status bar, without ever blocking the status render.**
 
-[![Tests](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml/badge.svg)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](CHANGELOG.md)
+[![Tests](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml/badge.svg)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
 
 </div>
 
@@ -61,9 +61,10 @@ Press `prefix + I` to install.
 
 ## Detail popup
 
-Press `prefix + M` to open a memory monitor in a tmux popup. It launches `btop`
+Press `prefix + M-r` to open a memory monitor in a tmux popup. It launches `btop`
 or `htop` when present, otherwise `free` on Linux or `vm_stat` on macOS. On tmux
-older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_key`.
+older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_key`;
+`set -g @ram_revamped_popup_key 'M'` restores the key used before 2.0.0.
 
 ## Configuration
 
@@ -99,7 +100,7 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | `@ram_revamped_swap_warn_thresh` | `1` | swap percent at or above which the warning shows |
 | `@ram_revamped_swap_active_icon` | empty | icon shown by `#{ram_swap_icon}` while swap is active |
 | `@ram_revamped_swap_active_color` | empty | color shown by `#{ram_swap_color}` while swap is active |
-| `@ram_revamped_popup_key` | `M` | prefix key that opens the detail popup; set `off` to bind nothing |
+| `@ram_revamped_popup_key` | `M-r` | prefix key that opens the detail popup; set `off` to bind nothing |
 | `@ram_revamped_popup_width` | `80%` | popup width |
 | `@ram_revamped_popup_height` | `60%` | popup height |
 | `@ram_revamped_enable_logging` | `0` | set to `1` to log under `~/.tmux/ram-revamped-logs` |

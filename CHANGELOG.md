@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-17
+
 ### Added
 
 - `#{ram_pressure_fg_color}` colors the pressure metric by the same low, medium,
@@ -26,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking:** the detail popup moves from `prefix + M` to `prefix + M-r`, the
+  key the family allocation gives this plugin, so `M` goes back to tmux's own
+  clear-mark binding. Set `@ram_revamped_popup_key` to `M` to keep the old key.
 - The options-mode background process reads every option it needs in one tmux
   call per tick, sends its cache writes and published values in a second, and
   keeps its functions out of the environment of the commands it runs. vm_stat

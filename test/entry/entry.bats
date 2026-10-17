@@ -76,7 +76,7 @@ record_bind_keys() {
   export -f tmux _mock_tmux
 }
 
-@test "entry - the popup key defaults to M" {
+@test "entry - the popup key defaults to M-r" {
   # Arrange
   record_bind_keys
 
@@ -84,7 +84,7 @@ record_bind_keys() {
   bash "${ENTRY}"
 
   # Assert
-  [[ "$(cat "${BIND_LOG}")" == "bind-key M run-shell "*"/src/ram.sh popup" ]]
+  [[ "$(cat "${BIND_LOG}")" == "bind-key M-r run-shell "*"/src/ram.sh popup" ]]
 }
 
 @test "entry - a popup key of off binds nothing" {
