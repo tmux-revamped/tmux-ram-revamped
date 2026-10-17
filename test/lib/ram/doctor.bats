@@ -29,7 +29,7 @@ teardown() {
   [[ "${output}" == *"tmux-ram-revamped doctor"* ]]
   [[ "${output}" == *"platform: Linux"* ]]
   [[ "${output}" == *"/proc/meminfo (Linux)"* ]]
-  [[ "${output}" == *"swap: vm_stat found"* ]]
+  [[ "${output}" == *"swap: /proc/meminfo"* ]]
 }
 
 @test "doctor.sh - ram_doctor reports the macOS source" {
@@ -46,4 +46,44 @@ teardown() {
   has_command() { return 1; }
   run ram_doctor
   [[ "${output}" == *"unsupported platform"* ]]
+}
+
+@test "doctor.sh - the Linux report names the Linux sources, never vm_stat" {
+  # Arrange
+  _PLATFORM_OS_CACHE="Linux"
+  has_command() { return 0; }
+  _doctor_readable() { [[ "${1}" == "/proc/meminfo" ]]; }
+
+  # Act
+  run ram_doctor
+
+  # Assert
+  [[ "${output}" != *"vm_stat"* ]] || false
+  [[ "${output}" == *"swap: /proc/meminfo found"* ]] || false
+  [[ "${output}" == *"pressure: /proc/pressure/memory missing"* ]]
+}
+
+@test "doctor.sh - the macOS report probes sysctl and vm_stat" {
+  # Arrange
+  _PLATFORM_OS_CACHE="Darwin"
+  has_command() { [[ "${1}" == "sysctl" ]]; }
+
+  # Act
+  run ram_doctor
+
+  # Assert
+  [[ "${output}" == *"swap: sysctl found"* ]] || false
+  [[ "${output}" == *"pressure: vm_stat missing"* ]]
+}
+
+@test "doctor.sh - the readable seam checks the file" {
+  # Arrange
+  local file="${TEST_TMPDIR}/probe"
+  : >"${file}"
+
+  # Act
+  run _doctor_readable "${file}"
+
+  # Assert
+  [ "${status}" -eq 0 ]
 }

@@ -36,6 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `doctor` on Linux reported swap and pressure as fed by `vm_stat`, a macOS
+  tool, so it always showed them missing. It now names `/proc/meminfo` and
+  `/proc/pressure/memory` on Linux and `sysctl` and `vm_stat` on macOS.
 - `@ram_revamped_popup_key` could not be turned off: an empty value fell back
   to `M`, so the popup always claimed a prefix key. Setting it to `off` now
   binds nothing, and the default stays `M`.

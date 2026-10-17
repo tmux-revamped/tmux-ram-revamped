@@ -24,6 +24,18 @@ _doctor_probe() {
   fi
 }
 
+_doctor_readable() {
+  [[ -r "${1}" ]]
+}
+
+_doctor_file() {
+  if _doctor_readable "${2}"; then
+    echo "${1}: ${2} found"
+  else
+    echo "${1}: ${2} missing"
+  fi
+}
+
 # ram_doctor -> print the capability report to stdout.
 ram_doctor() {
   echo "tmux-ram-revamped doctor"
@@ -35,11 +47,18 @@ ram_doctor() {
   else
     echo "source: none (unsupported platform)"
   fi
-  _doctor_probe "swap" "vm_stat"
-  _doctor_probe "pressure" "vm_stat"
+  if is_linux; then
+    _doctor_file "swap" "/proc/meminfo"
+    _doctor_file "pressure" "/proc/pressure/memory"
+  elif is_macos; then
+    _doctor_probe "swap" "sysctl"
+    _doctor_probe "pressure" "vm_stat"
+  fi
   _doctor_probe "top process" "ps"
   _doctor_probe "popup monitor" "btop"
 }
 
 export -f _doctor_probe
+export -f _doctor_readable
+export -f _doctor_file
 export -f ram_doctor
