@@ -1,156 +1,147 @@
 <div align="center">
 
-<h1>tmux-ram-revamped</h1>
+# tmux-ram-revamped
 
-**RAM usage for your tmux status bar, without ever blocking the status render.**
+<strong>RAM, swap and memory pressure in the tmux status bar, sampled in the background so the render never waits.</strong>
 
-[![Tests](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml/badge.svg)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+English &nbsp;|&nbsp; [日本語](README.ja.md) &nbsp;|&nbsp; [简体中文](README.zh-Hans.md) &nbsp;|&nbsp; [繁體中文（香港）](README.zh-HK.md)
+
+[![Tests](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml/badge.svg)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+
+<p align="center">
+  <a href="#what-it-does">What it does</a> &nbsp;|&nbsp;
+  <a href="#installation">Installation</a> &nbsp;|&nbsp;
+  <a href="#usage">Usage</a> &nbsp;|&nbsp;
+  <a href="#configuration">Configuration</a> &nbsp;|&nbsp;
+  <a href="#key-bindings">Key bindings</a> &nbsp;|&nbsp;
+  <a href="#how-it-works">How it works</a>
+</p>
 
 </div>
 
-**2** platforms · **95%+** coverage
+**18 placeholders. A fresh sample every 5 seconds and the slower details every 60. Built-in tools only. Tested on macOS and Linux.**
 
-Shows RAM usage, available memory, swap, and a memory breakdown in your tmux status bar. The value is read from a tmux server user-option and returns instantly, while a detached worker recomputes it in the background. No temp files are used; all state lives in tmux options.
+---
 
-Inspired by the RAM metrics in [tmux-cpu](https://github.com/tmux-plugins/tmux-cpu). Built from [tmux-plugin-template](https://github.com/tmux-revamped/tmux-plugin-template).
+## What it does
 
-<table>
-<tr>
-<td><b>Non-blocking</b><br>The status render reads a cached value and returns instantly. A detached worker recomputes in the background.</td>
-<td><b>No temp files</b><br>All state lives in tmux server options. Nothing is written to disk.</td>
-</tr>
-<tr>
-<td><b>Cross-platform</b><br>Runs on Linux and macOS, Intel and Apple Silicon, with built-in tools only.</td>
-<td><b>Tested</b><br>95%+ coverage on every supported platform.</td>
-</tr>
-</table>
+The plugin puts memory figures in your status line: used and available memory, swap, memory pressure, a breakdown of where memory went, the largest process, and a sparkline of recent usage. The status line reads a value tmux already holds, and a background process takes the next sample. `prefix + M-r` opens a memory monitor in a popup.
 
-## Placeholders
+## Requirements
 
-| Placeholder | Output |
-|-------------|--------|
-| `#{ram_percentage}` | used memory, for example `61%` |
-| `#{ram_icon}` | a tier icon for the current usage |
-| `#{ram_fg_color}` | foreground color for the current tier |
-| `#{ram_bg_color}` | background color for the current tier |
-| `#{ram_available}` | available memory percent, for example `40%` |
-| `#{ram_swap}` | swap used percent, empty when there is no swap |
-| `#{ram_pressure}` | memory-pressure percent, higher means more pressure, for example `36%` |
-| `#{ram_pressure_fg_color}` | foreground color for the pressure tier, by the usage thresholds |
-| `#{ram_breakdown}` | memory composition, for example `W 3.2G C 1.1G I 2.0G F 4.5G`; on Linux the four slots hold buffers, zero, cached, and free |
-| `#{ram_swap_icon}` | warning icon shown while swap is in use |
-| `#{ram_swap_color}` | warning color shown while swap is in use |
-| `#{ram_absolute}` | absolute used over total, for example `12.3G / 32G` |
-| `#{ram_commit}` | committed-memory ratio percent (Linux), early OOM warning |
-| `#{ram_reclaimable}` | reclaimable cache size (Linux), for example `4.0G` |
-| `#{ram_top_process}` | the largest memory consumer, for example `firefox 1.2G` |
-| `#{ram_graph}` | history sparkline of recent usage, for example `▁▂▄▆█` |
-| `#{ram_trend}` | trend arrow over the history window (`↑` `↓` `→`) |
-| `#{ram_text}` | glyph-free plain-language line for screen readers |
+| Requirement | Version or note |
+|:------------|:----------------|
+| tmux | 3.2 or later |
+| bash | 3.2 or later, so the stock macOS `/bin/bash` works |
+| Operating system | macOS on Apple Silicon and Intel, Linux on x86_64 and arm64 |
+| Core tools | BSD, GNU or uutils coreutils |
+| Memory source | `vm_stat` and `sysctl` on macOS, `/proc/meminfo` and `/proc/pressure/memory` on Linux |
+| `btop` or `htop` | Optional, for the detail popup |
 
-## Install
+## Installation
 
-With [TPM](https://github.com/tmux-plugins/tpm):
+With [TPM](https://github.com/tmux-plugins/tpm), add the plugin and a placeholder to `~/.tmux.conf`, then press `prefix + I`:
 
 ```tmux
 set -g @plugin 'tmux-revamped/tmux-ram-revamped'
 set -g status-right '#{ram_icon} #{ram_percentage}'
 ```
 
-Press `prefix + I` to install.
+Without TPM, clone the repository and run the entry point from `~/.tmux.conf`, after the line that sets `status-right`:
 
-## Detail popup
+```sh
+git clone https://github.com/tmux-revamped/tmux-ram-revamped ~/.tmux/plugins/tmux-ram-revamped
+```
 
-Press `prefix + M-r` to open a memory monitor in a tmux popup. It launches `btop`
-or `htop` when present, otherwise `free` on Linux or `vm_stat` on macOS. On tmux
-older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_key`;
-`set -g @ram_revamped_popup_key 'M'` restores the key used before 2.0.0.
+```tmux
+run-shell ~/.tmux/plugins/tmux-ram-revamped/ram-revamped.tmux
+```
+
+## Usage
+
+Put any of these placeholders in `status-left` or `status-right`. A placeholder whose source is missing renders nothing.
+
+| Placeholder | Output |
+|:------------|:-------|
+| `#{ram_percentage}` | Used memory, for example `61%` |
+| `#{ram_icon}` | Tier icon for the used memory |
+| `#{ram_fg_color}` | Foreground style for the used-memory tier |
+| `#{ram_bg_color}` | Background style for the used-memory tier |
+| `#{ram_available}` | Available memory, for example `40%` |
+| `#{ram_swap}` | Swap in use, empty when there is no swap |
+| `#{ram_swap_icon}` | Warning icon while swap use is at or above the threshold |
+| `#{ram_swap_color}` | Warning style while swap use is at or above the threshold |
+| `#{ram_pressure}` | Memory pressure, for example `36%`. Higher means more pressure |
+| `#{ram_pressure_fg_color}` | Foreground style for the pressure, by the same thresholds as used memory |
+| `#{ram_breakdown}` | Memory composition in gigabytes, for example `W 3.2G C 1.1G I 2.0G F 4.5G` |
+| `#{ram_absolute}` | Used over total, for example `12.3G / 32G` |
+| `#{ram_commit}` | Committed memory over the commit limit, Linux only |
+| `#{ram_reclaimable}` | Page cache, buffers and reclaimable slab, Linux only, for example `4.0G` |
+| `#{ram_top_process}` | The process with the largest resident memory, for example `firefox 1.2G` |
+| `#{ram_graph}` | Sparkline of recent samples, for example `▁▂▄▆█` |
+| `#{ram_trend}` | `↑`, `↓` or `→` over the history window |
+| `#{ram_text}` | A plain line for screen readers, for example `RAM 61% used, 40% available, swap 3%` |
+
+A fuller status line, with the style reset at the end:
+
+```tmux
+set -g status-right '#{ram_fg_color}#{ram_icon} #{ram_percentage}#[default] #{ram_graph}'
+```
+
+The plugin also answers two commands from a shell: `~/.tmux/plugins/tmux-ram-revamped/src/ram.sh doctor` reports the platform and the sources it found, and `ram.sh popup` opens the monitor.
 
 ## Configuration
 
+Set any option in `~/.tmux.conf` before the plugin loads.
+
 | Option | Default | Meaning |
-|--------|---------|---------|
-| `@ram_revamped_interval` | `5` | seconds a sample stays fresh before a background re-sample |
-| `@ram_revamped_detail_interval` | `60` | seconds the slower detail metrics, pressure, breakdown, absolute, commit, reclaimable and top process, stay fresh before a re-sample |
-| `@ram_revamped_percentage_format` | `%s%%` | printf format for the value |
-| `@ram_revamped_medium_thresh` | `50` | usage percent at which the tier becomes medium |
-| `@ram_revamped_high_thresh` | `85` | usage percent at which the tier becomes high |
-| `@ram_revamped_low_icon` | `▰▱▱` | icon for the low tier |
-| `@ram_revamped_medium_icon` | `▰▰▱` | icon for the medium tier |
-| `@ram_revamped_high_icon` | `▰▰▰` | icon for the high tier |
-| `@ram_revamped_low_fg_color` | empty | foreground for the low tier |
-| `@ram_revamped_medium_fg_color` | empty | foreground for the medium tier |
-| `@ram_revamped_high_fg_color` | empty | foreground for the high tier |
-| `@ram_revamped_low_bg_color` | empty | background for the low tier |
-| `@ram_revamped_medium_bg_color` | empty | background for the medium tier |
-| `@ram_revamped_high_bg_color` | empty | background for the high tier |
-| `@ram_revamped_available_format` | `%s%%` | format for available memory |
-| `@ram_revamped_swap_format` | `%s%%` | format for swap usage |
-| `@ram_revamped_pressure_format` | `%s%%` | format for the memory-pressure metric |
-| `@ram_revamped_breakdown_format` | `W %sG C %sG I %sG F %sG` | format for the memory breakdown (four values: wired, compressed, inactive, free on macOS; buffers, zero, cached, free on Linux) |
-| `@ram_revamped_absolute_format` | `%s / %s` | format for absolute used over total |
-| `@ram_revamped_commit_format` | `%s%%` | format for the commit ratio |
-| `@ram_revamped_reclaimable_format` | `%s` | format for the reclaimable cache figure |
-| `@ram_revamped_top_process_format` | `%s %s` | format for the top memory process (name, size) |
-| `@ram_revamped_history_size` | `30` | number of samples kept in the history ring |
-| `@ram_revamped_trend_threshold` | `3` | percent change before the trend arrow flips |
-| `@ram_revamped_trend_up` | `↑` | glyph for a rising trend |
-| `@ram_revamped_trend_down` | `↓` | glyph for a falling trend |
-| `@ram_revamped_trend_flat` | `→` | glyph for a steady trend |
-| `@ram_revamped_swap_warn_thresh` | `1` | swap percent at or above which the warning shows |
-| `@ram_revamped_swap_active_icon` | empty | icon shown by `#{ram_swap_icon}` while swap is active |
-| `@ram_revamped_swap_active_color` | empty | color shown by `#{ram_swap_color}` while swap is active |
-| `@ram_revamped_popup_key` | `M-r` | prefix key that opens the detail popup; set `off` to bind nothing |
-| `@ram_revamped_popup_width` | `80%` | popup width |
-| `@ram_revamped_popup_height` | `60%` | popup height |
-| `@ram_revamped_enable_logging` | `0` | set to `1` to log under `~/.tmux/ram-revamped-logs` |
+|:-------|:--------|:--------|
+| `@ram_revamped_interval` | `5` | Seconds a sample stays fresh |
+| `@ram_revamped_detail_interval` | `60` | Seconds the pressure, breakdown, absolute, commit, reclaimable and top process figures stay fresh |
+| `@ram_revamped_render` | unset | `options` turns each placeholder into an option read, written by one background process per server |
+| `@ram_revamped_medium_thresh` | `50` | Percent at which the tier becomes medium |
+| `@ram_revamped_high_thresh` | `85` | Percent at which the tier becomes high |
+| `@ram_revamped_low_icon` | `▰▱▱` | Icon for the low tier |
+| `@ram_revamped_medium_icon` | `▰▰▱` | Icon for the medium tier |
+| `@ram_revamped_high_icon` | `▰▰▰` | Icon for the high tier |
+| `@ram_revamped_low_fg_color` | empty | Foreground style for the low tier, such as `#[fg=green]` |
+| `@ram_revamped_medium_fg_color` | empty | Foreground style for the medium tier |
+| `@ram_revamped_high_fg_color` | empty | Foreground style for the high tier |
+| `@ram_revamped_low_bg_color` | empty | Background style for the low tier |
+| `@ram_revamped_medium_bg_color` | empty | Background style for the medium tier |
+| `@ram_revamped_high_bg_color` | empty | Background style for the high tier |
+| `@ram_revamped_percentage_format` | `%s%%` | printf format for used memory |
+| `@ram_revamped_available_format` | `%s%%` | printf format for available memory |
+| `@ram_revamped_swap_format` | `%s%%` | printf format for swap |
+| `@ram_revamped_pressure_format` | `%s%%` | printf format for pressure |
+| `@ram_revamped_breakdown_format` | `W %sG C %sG I %sG F %sG` | printf format for the four breakdown values |
+| `@ram_revamped_absolute_format` | `%s / %s` | printf format for used and total |
+| `@ram_revamped_commit_format` | `%s%%` | printf format for the commit ratio |
+| `@ram_revamped_reclaimable_format` | `%s` | printf format for the reclaimable size |
+| `@ram_revamped_top_process_format` | `%s %s` | printf format for the process name and size |
+| `@ram_revamped_history_size` | `30` | Samples kept for the sparkline and the trend |
+| `@ram_revamped_trend_threshold` | `3` | Percentage points of change before the trend arrow leaves `→` |
+| `@ram_revamped_trend_up` | `↑` | Rising trend glyph |
+| `@ram_revamped_trend_down` | `↓` | Falling trend glyph |
+| `@ram_revamped_trend_flat` | `→` | Steady trend glyph |
+| `@ram_revamped_swap_warn_thresh` | `1` | Swap percent at which the swap warning shows |
+| `@ram_revamped_swap_active_icon` | empty | Icon that `#{ram_swap_icon}` shows |
+| `@ram_revamped_swap_active_color` | empty | Style that `#{ram_swap_color}` shows |
+| `@ram_revamped_icons` | `ascii` | `nerd` labels every value with a Nerd Font glyph |
+| `@ram_revamped_<metric>_label` | unset | Text printed before one value, only when the value is not empty. `''` removes the Nerd Font label for that value |
+| `@ram_revamped_fixed_width` | `off` | `on` pads percentages to 4 characters, so a change from `9%` to `42%` does not shift the status line |
+| `@ram_revamped_<metric>_width` | unset | Pad one value to this many characters. A longer value is never cut |
+| `@ram_revamped_popup_key` | `M-r` | Prefix key that opens the detail popup. `off` binds nothing |
+| `@ram_revamped_popup_width` | `80%` | Popup width |
+| `@ram_revamped_popup_height` | `60%` | Popup height |
+| `@ram_revamped_enable_logging` | `0` | `1` writes errors to `~/.tmux/ram-revamped-logs/` |
 
-### Internal state
+`<metric>` is one of `percentage`, `available`, `swap`, `pressure`, `breakdown`, `absolute`, `commit`, `reclaimable`, `top_process`, `graph` and `trend`.
 
-The plugin manages these options itself. Do not set them.
-
-| Option | Holds |
-|--------|-------|
-| `@ram_revamped_published` | space-separated metrics the status line uses, set at load so the options-mode sampler publishes only those |
-
-## Labels
-
-Every value placeholder can carry a label, an icon or word printed before the value only when the value is not empty, so each figure on the bar says what it is. Set `@ram_revamped_<metric>_label` for one metric, or `@ram_revamped_icons` to `nerd` to label every metric from a Nerd Font set. A metric's own label wins over the set, and setting it to `''` removes the set's label for that metric. The default, `ascii`, adds no labels, so existing bars render unchanged.
-
-Set `@ram_revamped_fixed_width` to `on` to pad every value on the left to the widest it can get, such as four characters for a percentage, so a value that changes length, like `9%` becoming `42%`, never shifts the rest of a right-aligned status line. `@ram_revamped_<metric>_width` sets one metric's width and wins over the fixed width. A longer value is never cut. Both are off by default.
-
-### Render mode
-
-By default each placeholder becomes a `#()` call, and tmux runs it on every status redraw, which can be about once a second when several plugins share the bar. Set `@ram_revamped_render` to `options` and each placeholder becomes a read of a tmux option instead, such as `#{E:@ram_revamped_out_percentage}`. One background process per server samples memory every `@ram_revamped_interval` seconds, 5 by default, writes every value the status line uses in a single tmux call, and redraws once, so values change together and nothing renders empty while a job runs. The process exits after its current tick when the server stops, and a config reload replaces it.
-
-```tmux
-set -g @ram_revamped_render 'options'
-set -g @ram_revamped_fixed_width 'on'
-```
-
-
-```tmux
-set -g @ram_revamped_icons 'nerd'
-set -g @ram_revamped_percentage_label ''
-```
-
-| Metric | `nerd` glyph |
-|--------|--------------|
-| `percentage` | `md-gauge` |
-| `available` | `md-memory` |
-| `swap` | `md-file_swap` |
-| `pressure` | `U+F0F86` |
-| `breakdown` | `md-chart_donut` |
-| `absolute` | `md-database` |
-| `commit` | `md-sigma` |
-| `reclaimable` | `md-recycle` |
-| `top_process` | `md-application` |
-| `graph` | `md-chart_line_variant` |
-| `trend` | `md-trending_up` |
-
-## Theme color suggestions
-
-The tier colors default to the 16 ANSI names, which the active theme remaps, so the plugin matches any theme out of the box; for exact hex copy one block below.
+<details>
+<summary><strong>Tier colors for common themes</strong></summary>
 
 ### Catppuccin Mocha
 
@@ -200,42 +191,96 @@ set -g @ram_revamped_medium_fg_color '#[fg=#b58900]'
 set -g @ram_revamped_high_fg_color '#[fg=#dc322f]'
 ```
 
-The `#{ram_breakdown}` placeholder reports the memory composition in gigabytes.
-On macOS the four values are wired, compressed, inactive, and free from
-`vm_stat`, matching Activity Monitor. Linux has no wired or compressed counts, so
-the same four slots hold buffers, zero, cached, and free from `/proc/meminfo`;
-with the default format the `W` figure is buffers and the `I` figure is the page
-cache.
+</details>
 
-The `#{ram_pressure}` placeholder reports a memory-pressure metric. On Linux it
-is the `some avg10` value from `/proc/pressure/memory`, the percent of time
-memory was stalled in the last ten seconds. On macOS it is the wired-plus-
-compressed share of memory from `vm_stat`, the pages that cannot be reclaimed
-plus the pages already compressed under stress, which is the signal Activity
-Monitor and iStat track. A higher number means more pressure on both platforms.
-The placeholder is empty when the source is unavailable.
+### Internal state
 
-## Support by platform and architecture
+The plugin manages these options itself. Do not set them.
 
-Works on every supported platform and architecture with built-in tools, no extra
-package required.
+| Option | Holds |
+|:-------|:------|
+| `@ram_revamped_published` | The metrics the status line uses, recorded at load so options mode writes only those |
+| `@ram_revamped_history` | The recent used-memory samples behind `#{ram_graph}` and `#{ram_trend}` |
+| `@ram_revamped_out_<metric>` | The rendered value of each metric in options mode |
+| `@ram_revamped_ticker_pid` | The process id of the options-mode background process |
+| `@ram_revamped_option_names` | The options that process reads in one tmux call per tick |
+| `@ram_revamped_percent` and the other samples | Cached readings, each with a `_ts` timestamp |
 
-| Platform | Source |
-|----------|--------|
-| macOS (Intel and Apple Silicon) | `vm_stat` page counts |
-| Linux (x86_64 and arm64) | `/proc/meminfo`, used is total minus available |
+## Key bindings
+
+| Key | Action | Option |
+|:----|:-------|:-------|
+| `prefix + M-r` | Open the detail popup | `@ram_revamped_popup_key` |
+
+`M-r` is the one key the tmux-revamped family allocates to this plugin. Before 2.0.0 the popup was on `prefix + M`, which tmux binds to clear the marked pane. To keep the old key:
+
+```tmux
+set -g @ram_revamped_popup_key 'M'
+```
+
+The popup runs `btop` or `htop` when one is installed, `vm_stat 1` on macOS, and `free -h -s 1` on Linux.
+
+## How it works
+
+**Jobs mode, the default.** The entry point replaces each placeholder with a `#()` call to [`src/ram.sh`](src/ram.sh). The call prints the cached value at once. When the cache is older than `@ram_revamped_interval`, it also starts a detached process that takes a new sample and stores it in tmux options. A lock option keeps a second sampler from starting while one runs.
+
+**Options mode.** tmux reruns every `#()` call on each redraw, which can be about once a second when several plugins share the bar. With `@ram_revamped_render` set to `options`, each placeholder becomes a read such as `#{E:@ram_revamped_out_percentage}`. One background process per server samples every `@ram_revamped_interval` seconds, writes every value the status line uses in one tmux call, and refreshes the clients once. It exits when the server stops, and a config reload replaces it.
+
+```tmux
+set -g @ram_revamped_render 'options'
+set -g @ram_revamped_fixed_width 'on'
+```
+
+**Where the numbers come from.**
+
+| Figure | macOS | Linux |
+|:-------|:------|:------|
+| Used | Active, wired and compressed pages from `vm_stat` | `MemTotal` minus `MemAvailable` from `/proc/meminfo` |
+| Available | Free, inactive and speculative pages | `MemAvailable` |
+| Swap | `sysctl vm.swapusage` | `SwapTotal` and `SwapFree` |
+| Pressure | Wired and compressed pages as a share of all pages | `some avg10` from `/proc/pressure/memory`, the percent of the last 10 seconds spent stalled on memory |
+| Breakdown | Wired, compressed, inactive and free | Buffers, `0`, cached and free, in the same four slots |
+| Top process | `ps axo rss=,comm=` | `ps axo rss=,comm=` |
+
+The process name comes from `ps`, which any user on the machine controls, so every `#` in it is doubled before tmux reads it as a format. Numbers are formatted under the C locale, so a locale with a decimal comma still prints `1.5G`.
+
+<details>
+<summary><strong>Nerd Font labels</strong></summary>
+
+```tmux
+set -g @ram_revamped_icons 'nerd'
+set -g @ram_revamped_percentage_label ''
+```
+
+| Metric | Glyph |
+|:-------|:------|
+| `percentage` | `md-gauge` |
+| `available` | `md-memory` |
+| `swap` | `md-file_swap` |
+| `pressure` | `U+F0F86` |
+| `breakdown` | `md-chart_donut` |
+| `absolute` | `md-database` |
+| `commit` | `md-sigma` |
+| `reclaimable` | `md-recycle` |
+| `top_process` | `md-application` |
+| `graph` | `md-chart_line_variant` |
+| `trend` | `md-trending_up` |
+
+</details>
 
 ## Development
 
-```sh
-make test
-make lint
-make coverage
-```
+| Command | What it does |
+|:--------|:-------------|
+| `make test` | Runs the bats suite |
+| `make lint` | Runs shellcheck on every shell file |
+| `make coverage` | Measures line coverage with kcov and fails below 95 percent, on Linux |
+
+The suite needs `bats-core` and tmux.
 
 ## License
 
-[MIT](LICENSE), copyright Gustavo Franco.
+[MIT](LICENSE)
 
 <!-- family:begin -->
 
@@ -258,26 +303,26 @@ memory, and `family/bin/sweep` is how it is discharged.
 | [`tmux-bluetooth-revamped`](https://github.com/tmux-revamped/tmux-bluetooth-revamped) | Every connected Bluetooth device and its battery in your tmux status bar, without blocking the render |
 | [`tmux-cpu-revamped`](https://github.com/tmux-revamped/tmux-cpu-revamped) | CPU load, temperature, and frequency in your tmux status bar, without ever blocking the render |
 | [`tmux-disk-revamped`](https://github.com/tmux-revamped/tmux-disk-revamped) | Disk usage for your tmux status bar, without ever blocking the status render |
-| [`tmux-extract-revamped`](https://github.com/tmux-revamped/tmux-extract-revamped) | Fuzzy-grab any URL, path, or word off the screen and paste it, pure shell, no Python |
-| [`tmux-fzf-revamped`](https://github.com/tmux-revamped/tmux-fzf-revamped) | Jump to any session, window, or pane, or kill it, from one fzf popup |
-| [`tmux-git-revamped`](https://github.com/tmux-revamped/tmux-git-revamped) | Git repository status in your tmux status bar, without ever blocking the render |
-| [`tmux-gpu-revamped`](https://github.com/tmux-revamped/tmux-gpu-revamped) | GPU load, temperature, frequency, and memory for your tmux status bar |
-| [`tmux-kube-revamped`](https://github.com/tmux-revamped/tmux-kube-revamped) | Current Kubernetes context and namespace in your tmux status bar, async, kubectl-free, never blocking |
+| [`tmux-extract-revamped`](https://github.com/tmux-revamped/tmux-extract-revamped) | Pick a URL, path, hash or any other token off the screen with fzf and type it at the cursor, in pure shell |
+| [`tmux-fzf-revamped`](https://github.com/tmux-revamped/tmux-fzf-revamped) | Switch to, kill, rename or create tmux sessions, windows and panes from fzf pickers in a popup |
+| [`tmux-git-revamped`](https://github.com/tmux-revamped/tmux-git-revamped) | Show the active pane's git branch, changes and provider counts in the tmux status bar without blocking it |
+| [`tmux-gpu-revamped`](https://github.com/tmux-revamped/tmux-gpu-revamped) | GPU load, temperature, clock, power and memory in the tmux status bar, from NVIDIA, AMD, Intel and Apple GPUs |
+| [`tmux-kube-revamped`](https://github.com/tmux-revamped/tmux-kube-revamped) | Current Kubernetes context and namespace in the tmux status bar, parsed from kubeconfig without kubectl |
 | [`tmux-launcher-revamped`](https://github.com/tmux-revamped/tmux-launcher-revamped) | Launch any TUI app in a popup or a window, scoped to the current pane's directory, with one configurable bindi |
 | [`tmux-logging-revamped`](https://github.com/tmux-revamped/tmux-logging-revamped) | Capture any pane to a file: live logging, full scrollback, or a one-shot screenshot |
 | [`tmux-music-revamped`](https://github.com/tmux-revamped/tmux-music-revamped) | Now playing in your tmux status bar, without ever blocking the status render |
 | [`tmux-network-revamped`](https://github.com/tmux-revamped/tmux-network-revamped) | Network throughput in your tmux status bar, without ever blocking the render |
 | [`tmux-pain-control-revamped`](https://github.com/tmux-revamped/tmux-pain-control-revamped) | Standard pane and window management bindings for tmux, version aware, vim friendly, and fully configurable |
-| [`tmux-persist-revamped`](https://github.com/tmux-revamped/tmux-persist-revamped) | Save, auto-save, and restore your whole tmux environment, one plugin, no status-line tricks |
-| [`tmux-plugin-template`](https://github.com/tmux-revamped/tmux-plugin-template) | A template for building non-blocking tmux status plugins |
-| [`tmux-pomodoro-revamped`](https://github.com/tmux-revamped/tmux-pomodoro-revamped) | A Pomodoro timer in your tmux status bar, with zero temp files: all state lives in tmux options |
-| [`tmux-ram-revamped`](https://github.com/tmux-revamped/tmux-ram-revamped) | **this plugin**, RAM usage for your tmux status bar, without ever blocking the status render |
-| [`tmux-reorder-revamped`](https://github.com/tmux-revamped/tmux-reorder-revamped) | Drag a window tab on the status bar with the mouse to move that window |
-| [`tmux-scroll-revamped`](https://github.com/tmux-revamped/tmux-scroll-revamped) | Mouse wheel that does the right thing: scroll the app directly, copy-mode everywhere else. No app names to con |
-| [`tmux-sensible-revamped`](https://github.com/tmux-revamped/tmux-sensible-revamped) | Sensible tmux defaults that normalize behavior across every tmux version, OS, and terminal, without clobbering |
-| [`tmux-tiling-revamped`](https://github.com/tmux-revamped/tmux-tiling-revamped) | BSP tiling window management for tmux. Eight layouts, nineteen operations, zero dependencies |
-| [`tmux-time-revamped`](https://github.com/tmux-revamped/tmux-time-revamped) | Local clock and world clocks in your tmux status bar, without ever blocking the render |
-| [`tmux-weather-revamped`](https://github.com/tmux-revamped/tmux-weather-revamped) | Weather in your tmux status bar, fetched in the background so the render never waits on the network |
+| [`tmux-persist-revamped`](https://github.com/tmux-revamped/tmux-persist-revamped) | Save every tmux session, window and pane, auto-save on a timer, and restore it all after a reboot |
+| [`tmux-plugin-template`](https://github.com/tmux-revamped/tmux-plugin-template) | The starting point for a tmux-revamped plugin: shared library, bats harness, CI and family tooling |
+| [`tmux-pomodoro-revamped`](https://github.com/tmux-revamped/tmux-pomodoro-revamped) | A Pomodoro timer in the tmux status bar that keeps all of its state in tmux options, with no temp files |
+| [`tmux-ram-revamped`](https://github.com/tmux-revamped/tmux-ram-revamped) | **this plugin**, RAM, swap and memory pressure in the tmux status bar, sampled in the background so the render never waits |
+| [`tmux-reorder-revamped`](https://github.com/tmux-revamped/tmux-reorder-revamped) | Drag a window tab along the tmux status bar with the mouse to move that window |
+| [`tmux-scroll-revamped`](https://github.com/tmux-revamped/tmux-scroll-revamped) | Send the mouse wheel to apps that scroll themselves and into tmux copy-mode everywhere else |
+| [`tmux-sensible-revamped`](https://github.com/tmux-revamped/tmux-sensible-revamped) | Sensible tmux defaults, gated by tmux version and terminal, that leave the options you set alone |
+| [`tmux-tiling-revamped`](https://github.com/tmux-revamped/tmux-tiling-revamped) | Tiling window management for tmux: eight layouts including BSP dwindle and spiral, with layout undo |
+| [`tmux-time-revamped`](https://github.com/tmux-revamped/tmux-time-revamped) | Local and world clocks for the tmux status bar, colored by time of day, with countdowns and a DST warning |
+| [`tmux-weather-revamped`](https://github.com/tmux-revamped/tmux-weather-revamped) | Weather for the tmux status bar from wttr.in, fetched in the background so the status line never waits |
 
 ### Checking an installation
 
