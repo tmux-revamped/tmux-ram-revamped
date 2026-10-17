@@ -70,6 +70,7 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | Option | Default | Meaning |
 |--------|---------|---------|
 | `@ram_revamped_interval` | `5` | seconds a sample stays fresh before a background re-sample |
+| `@ram_revamped_detail_interval` | `60` | seconds the slower detail metrics, pressure, breakdown, absolute, commit, reclaimable and top process, stay fresh before a re-sample |
 | `@ram_revamped_percentage_format` | `%s%%` | printf format for the value |
 | `@ram_revamped_medium_thresh` | `50` | usage percent at which the tier becomes medium |
 | `@ram_revamped_high_thresh` | `85` | usage percent at which the tier becomes high |
@@ -102,6 +103,14 @@ older than 3.2 it opens a window instead. Rebind it with `@ram_revamped_popup_ke
 | `@ram_revamped_popup_width` | `80%` | popup width |
 | `@ram_revamped_popup_height` | `60%` | popup height |
 | `@ram_revamped_enable_logging` | `0` | set to `1` to log under `~/.tmux/ram-revamped-logs` |
+
+### Internal state
+
+The plugin manages these options itself. Do not set them.
+
+| Option | Holds |
+|--------|-------|
+| `@ram_revamped_published` | space-separated metrics the status line uses, set at load so the options-mode sampler publishes only those |
 
 ## Labels
 
