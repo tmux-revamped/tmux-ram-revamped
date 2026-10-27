@@ -18,7 +18,7 @@ teardown() {
   source "${BATS_TEST_DIRNAME}/../../../src/lib/utils/constants.sh"
 
   # Assert
-  [[ "${RAM_REVAMPED_VERSION}" == "2.0.0" ]] || false
+  [[ "${RAM_REVAMPED_VERSION}" == "2.0.1" ]] || false
   [[ -n "${TMUX_PLUGIN_DEFAULT_MAX_AGE}" ]] || false
   [[ "${TMUX_PLUGIN_PENDING}" == "..." ]]
 }

@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-27
+
 ### Fixed
 
+- A plugin directory whose path holds a space or an `&` broke every status-line
+  placeholder and the popup key: `/bin/sh` split the path at the space and
+  backgrounded the command at the `&`, and bash 5.2 replaced the `&` with the
+  placeholder. The path is now shell-quoted.
 - Switching from options mode back to jobs mode left the background process
   running. Jobs mode now releases it, and it exits on its next tick.
 
