@@ -87,6 +87,34 @@ record_bind_keys() {
   [[ "$(cat "${BIND_LOG}")" == "bind-key M-r run-shell "*"/src/ram.sh popup" ]]
 }
 
+@test "entry - a plugin path with an ampersand and a space reaches the shell as one word" {
+  # Arrange
+  local dir="${TEST_TMPDIR}/a&b c"
+  mkdir -p "${dir}/src"
+  cp -f "${ENTRY}" "${dir}/ram-revamped.tmux"
+  tmux set-option -gq "status-right" "[#{ram_percentage}]"
+
+  # Act
+  bash "${dir}/ram-revamped.tmux"
+
+  # Assert
+  [ "$(cat "$(_mock_opt_file status-right)")" = "[#(${TEST_TMPDIR}/a\\&b\\ c/src/ram.sh percentage)]" ]
+}
+
+@test "entry - the popup key quotes a plugin path with an ampersand and a space" {
+  # Arrange
+  local dir="${TEST_TMPDIR}/a&b c"
+  mkdir -p "${dir}/src"
+  cp -f "${ENTRY}" "${dir}/ram-revamped.tmux"
+  record_bind_keys
+
+  # Act
+  bash "${dir}/ram-revamped.tmux"
+
+  # Assert
+  [ "$(cat "${BIND_LOG}")" = "bind-key M-r run-shell ${TEST_TMPDIR}/a\\&b\\ c/src/ram.sh popup" ]
+}
+
 @test "entry - a popup key of off binds nothing" {
   # Arrange
   record_bind_keys

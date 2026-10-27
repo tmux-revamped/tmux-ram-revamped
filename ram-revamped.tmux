@@ -2,6 +2,9 @@
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RAM_CMD="${PLUGIN_DIR}/src/ram.sh"
+RAM_CMD_ARG="$(printf '%q' "${RAM_CMD}")"
+hash="#"
+RAM_CMD_ARG=${RAM_CMD_ARG//"${hash}"/"${hash}${hash}"}
 
 placeholders=(
   "\#{ram_percentage}"
@@ -25,24 +28,24 @@ placeholders=(
 )
 
 commands=(
-  "#(${RAM_CMD} percentage)"
-  "#(${RAM_CMD} icon)"
-  "#(${RAM_CMD} fg_color)"
-  "#(${RAM_CMD} bg_color)"
-  "#(${RAM_CMD} available)"
-  "#(${RAM_CMD} swap)"
-  "#(${RAM_CMD} swap_icon)"
-  "#(${RAM_CMD} swap_color)"
-  "#(${RAM_CMD} pressure)"
-  "#(${RAM_CMD} pressure_fg_color)"
-  "#(${RAM_CMD} breakdown)"
-  "#(${RAM_CMD} absolute)"
-  "#(${RAM_CMD} commit)"
-  "#(${RAM_CMD} reclaimable)"
-  "#(${RAM_CMD} top_process)"
-  "#(${RAM_CMD} graph)"
-  "#(${RAM_CMD} trend)"
-  "#(${RAM_CMD} text)"
+  "#(${RAM_CMD_ARG} percentage)"
+  "#(${RAM_CMD_ARG} icon)"
+  "#(${RAM_CMD_ARG} fg_color)"
+  "#(${RAM_CMD_ARG} bg_color)"
+  "#(${RAM_CMD_ARG} available)"
+  "#(${RAM_CMD_ARG} swap)"
+  "#(${RAM_CMD_ARG} swap_icon)"
+  "#(${RAM_CMD_ARG} swap_color)"
+  "#(${RAM_CMD_ARG} pressure)"
+  "#(${RAM_CMD_ARG} pressure_fg_color)"
+  "#(${RAM_CMD_ARG} breakdown)"
+  "#(${RAM_CMD_ARG} absolute)"
+  "#(${RAM_CMD_ARG} commit)"
+  "#(${RAM_CMD_ARG} reclaimable)"
+  "#(${RAM_CMD_ARG} top_process)"
+  "#(${RAM_CMD_ARG} graph)"
+  "#(${RAM_CMD_ARG} trend)"
+  "#(${RAM_CMD_ARG} text)"
 )
 
 render_mode="$(tmux show-option -gqv "@ram_revamped_render")"
@@ -60,9 +63,10 @@ target_for() {
 
 interpolate() {
   local value="${1}"
-  local i
+  local i target
   for (( i = 0; i < ${#placeholders[@]}; i++ )); do
-    value="${value//${placeholders[i]}/$(target_for "${commands[i]}")}"
+    target="$(target_for "${commands[i]}")"
+    value=${value//${placeholders[i]}/"${target}"}
   done
   echo "${value}"
 }
@@ -91,7 +95,7 @@ bind_popup() {
   key=$(tmux show-option -gqv "@ram_revamped_popup_key")
   [[ -z "${key}" ]] && key="M-r"
   [[ "${key}" == "off" ]] && return 0
-  tmux bind-key "${key}" run-shell "${RAM_CMD} popup"
+  tmux bind-key "${key}" run-shell "${RAM_CMD_ARG} popup"
 }
 
 chmod +x "${RAM_CMD}" 2>/dev/null || true
