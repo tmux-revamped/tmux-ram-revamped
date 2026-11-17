@@ -58,3 +58,4 @@ As of 2026-11-17:
 - No `.editorconfig`, `.yamllint.yml` or shfmt; the Makefile has `help`, `test`, `test-unit`, `coverage`, `lint` and `clean`, not the family's targets.
 - `#{ram_commit}` and `#{ram_reclaimable}` work on Linux only.
 - No `@ram_revamped_notify` for the out-of-memory warning yet.
+- `get_tmux_option` keeps a tmux option set to nothing as an empty value, where FAMILY.md has it mean the default; the ticker's own reader already takes the default.
