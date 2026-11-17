@@ -278,6 +278,8 @@ set -g @ram_revamped_percentage_label ''
 | `make lint` | Runs shellcheck on every shell file |
 | `make coverage` | Measures line coverage with kcov and fails below 95 percent, on Linux |
 
+On macOS, `brew bundle` installs every tool these targets call, from the [`Brewfile`](Brewfile).
+
 The suite needs `bats-core` and tmux.
 
 ## License

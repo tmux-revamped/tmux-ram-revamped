@@ -290,6 +290,8 @@ set -g @ram_revamped_percentage_label ''
 | `make lint` | 對所有 shell 檔案執行 shellcheck |
 | `make coverage` | 用 kcov 量度行覆蓋率，低於 95% 時失敗，在 Linux 上執行 |
 
+在 macOS 上，執行 `brew bundle` 會根據 [`Brewfile`](Brewfile) 安裝這些目標用到的所有工具。
+
 測試套件需要 `bats-core` 及 tmux。
 
 ## 授權條款

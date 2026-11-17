@@ -290,6 +290,8 @@ set -g @ram_revamped_percentage_label ''
 | `make lint` | すべてのシェルファイルにshellcheckを実行します |
 | `make coverage` | kcovで行カバレッジを測り、95パーセント未満なら失敗します。Linuxで動きます |
 
+macOS では、`brew bundle` を実行すると、これらのターゲットが使うツールがすべて [`Brewfile`](Brewfile) からインストールされます。
+
 テストスイートには`bats-core`とtmuxが必要です。
 
 ## ライセンス
