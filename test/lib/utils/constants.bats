@@ -12,13 +12,17 @@ teardown() {
 
 @test "constants.sh - exposes the plugin version" {
   # Arrange
+  local expected headings
+  headings=$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' "${BATS_TEST_DIRNAME}/../../../CHANGELOG.md")
+  expected="${headings%%$'\n'*}"
   unset _TMUX_PLUGIN_CONSTANTS_LOADED
 
   # Act
   source "${BATS_TEST_DIRNAME}/../../../src/lib/utils/constants.sh"
 
   # Assert
-  [[ "${RAM_REVAMPED_VERSION}" == "2.0.1" ]] || false
+  [[ -n "${expected}" ]] || false
+  [[ "${RAM_REVAMPED_VERSION}" == "${expected}" ]] || false
   [[ -n "${TMUX_PLUGIN_DEFAULT_MAX_AGE}" ]] || false
   [[ "${TMUX_PLUGIN_PENDING}" == "..." ]]
 }
