@@ -59,10 +59,16 @@ teardown() {
   [[ "$(ram_popup_command)" == "free -h -s 1" ]]
 }
 
-@test "popup.sh - ram_popup_command falls back to meminfo" {
+@test "popup.sh - ram_popup_command falls back to meminfo, and waits so the popup stays open" {
+  # Arrange
   has_command() { return 1; }
   _PLATFORM_OS_CACHE="Linux"
-  [[ "$(ram_popup_command)" == "cat /proc/meminfo" ]]
+
+  # Act
+  run ram_popup_command
+
+  # Assert
+  [[ "${output}" == "cat /proc/meminfo; read -r ram_revamped_wait" ]]
 }
 
 @test "popup.sh - ram_popup opens a popup on a supported tmux" {

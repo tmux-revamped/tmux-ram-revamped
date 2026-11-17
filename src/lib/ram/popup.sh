@@ -34,7 +34,7 @@ ram_popup_command() {
   if has_command htop; then echo "htop"; return 0; fi
   if is_macos; then echo "vm_stat 1"; return 0; fi
   if has_command free; then echo "free -h -s 1"; return 0; fi
-  echo "cat /proc/meminfo"
+  echo "cat /proc/meminfo; read -r ram_revamped_wait"
 }
 
 ram_popup() {

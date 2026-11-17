@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- On Linux without `btop`, `htop` and `free`, `prefix + M-r` opened a popup that
+  printed `/proc/meminfo` and closed at once. It now stays until Enter.
+
 ## [2.0.1] - 2026-10-27
 
 ### Fixed

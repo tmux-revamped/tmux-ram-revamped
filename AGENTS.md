@@ -13,7 +13,7 @@ Guidance for anyone, human or agent, changing tmux-ram-revamped. What it is and 
 | [`src/lib/ram/`](src/lib/ram) | This member's modules |
 | [`src/lib/utils/constants.sh`](src/lib/utils/constants.sh) | This member's constants, including its version |
 | [`src/lib/utils/`](src/lib/utils), [`src/lib/tmux/`](src/lib/tmux) | The shared library. Every file there except `constants.sh` is identical in every member |
-| [`test/`](test) | The bats suite. `helpers.bash` and `tmux_helpers.bash` are identical in every member; this member's own mocks go in the `_local` files |
+| [`test/`](test) | The bats suite. `helpers.bash` and `tmux_helpers.bash` are identical in every member; this member's own mocks go in the `_local` files. [`test/entry/keys.bats`](test/entry/keys.bats) presses the popup key through a second tmux attached to a private server, with stand-ins for `btop` and `htop` |
 
 ## Names
 
@@ -42,7 +42,7 @@ Guidance for anyone, human or agent, changing tmux-ram-revamped. What it is and 
 
 ## Gaps against FAMILY.md
 
-As of 2026-11-16:
+As of 2026-11-17:
 
 - Every script is bash, under `#!/usr/bin/env bash`, not POSIX `sh`, so it is untested under `dash`, `zsh` and BusyBox `sh`.
 - The code lives in [`src/`](src) and [`src/lib/`](src/lib); there is no `bin/ram-revamped`, `lib/state.sh` or `lib/core.sh`.
@@ -58,4 +58,3 @@ As of 2026-11-16:
 - No `.editorconfig`, `.yamllint.yml` or shfmt; the Makefile has `help`, `test`, `test-unit`, `coverage`, `lint` and `clean`, not the family's targets.
 - `#{ram_commit}` and `#{ram_reclaimable}` work on Linux only.
 - No `@ram_revamped_notify` for the out-of-memory warning yet.
-- No test presses its keys through a real client attached from a second tmux.
