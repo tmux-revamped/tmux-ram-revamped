@@ -13,7 +13,7 @@ teardown() {
 @test "constants.sh - exposes the plugin version" {
   # Arrange
   local expected headings
-  headings=$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' "${BATS_TEST_DIRNAME}/../../../CHANGELOG.md")
+  headings=$(sed -n 's/^##* \[\([0-9][0-9.]*\)\].*/\1/p' "${BATS_TEST_DIRNAME}/../../../CHANGELOG.md")
   expected="${headings%%$'\n'*}"
   unset _TMUX_PLUGIN_CONSTANTS_LOADED
 
