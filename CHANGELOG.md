@@ -1,5 +1,29 @@
 # Changelog
 
+# [3.0.0](https://github.com/tmux-revamped/tmux-ram-revamped/compare/v2.0.1...v3.0.0) (2026-11-18)
+
+
+### Bug Fixes
+
+* keep the meminfo popup open ([0fff16c](https://github.com/tmux-revamped/tmux-ram-revamped/commit/0fff16cb7110739afee03250c0363561a6d740e6))
+
+
+### Documentation
+
+* add the settings and value rules ([045ce93](https://github.com/tmux-revamped/tmux-ram-revamped/commit/045ce931079e8212d31bba6f3cf07c7566405fa2))
+
+
+### Features
+
+* add a shared desktop notifier ([609da7f](https://github.com/tmux-revamped/tmux-ram-revamped/commit/609da7fc1c94223d6cf0f78b1b90208e98e812dd))
+* **family:** accept bot updates in the audit ([0bdbed5](https://github.com/tmux-revamped/tmux-ram-revamped/commit/0bdbed594793da3d5d14bd9464de124ea4f12118))
+
+
+### BREAKING CHANGES
+
+* decided on its own, apart from the alias rule, which
+is about names.
+
 ## [2.0.1] - 2026-10-27
 
 ### Fixed
