@@ -1,0 +1,15 @@
+$ ram-revamped doctor
+tmux               ok       <path>, 3.8
+meminfo            warn     <path> cannot be read, so every figure stays empty
+pressure           warn     <path> cannot be read, so the pressure stays empty
+ps                 warn     without it the top process stays empty
+monitor            warn     neither btop, htop nor free is installed, so the popup prints <path>
+settings           ok       every option holds a value it knows
+keys               ok       every key it binds is free or its own
+gum                ok       <path>
+awk                ok       <path>, <flavor>
+sed                ok       <path>, <flavor>
+tr                 ok       <path>, <flavor>
+date               ok       <path>, <flavor>
+cat                ok       <path>, <flavor>
+exit 0

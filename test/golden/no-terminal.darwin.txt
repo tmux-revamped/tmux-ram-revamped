@@ -1,0 +1,3 @@
+$ ram-revamped
+ram-revamped: no command given. run 'ram-revamped help' for usage.
+exit 1

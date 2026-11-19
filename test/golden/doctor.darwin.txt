@@ -1,0 +1,16 @@
+$ ram-revamped doctor
+tmux               ok       <path>, 3.8
+vm_stat            warn     without it every figure stays empty
+sysctl             warn     without it the swap stays empty
+commit             warn     macOS keeps no commit limit, so the commit ratio stays empty
+ps                 warn     without it the top process stays empty
+monitor            warn     neither btop nor htop is installed, so the popup runs vm_stat 1
+settings           ok       every option holds a value it knows
+keys               ok       every key it binds is free or its own
+gum                ok       <path>
+awk                ok       <path>, <flavor>
+sed                ok       <path>, <flavor>
+tr                 ok       <path>, <flavor>
+date               ok       <path>, <flavor>
+cat                ok       <path>, <flavor>
+exit 0

@@ -4,60 +4,71 @@
 
 <strong>在 tmux 状态栏显示内存、交换空间和内存压力，在后台采样，渲染从不等待。</strong>
 
-[English](README.md) | [日本語](README.ja.md) | 简体中文 | [繁體中文（香港）](README.zh-HK.md)
+[English](README.md) &nbsp;|&nbsp; [日本語](README.ja.md) &nbsp;|&nbsp; 简体中文 &nbsp;|&nbsp; [繁體中文（香港）](README.zh-HK.md)
 
-[![family](https://img.shields.io/github/actions/workflow/status/tmux-revamped/tmux-ram-revamped/family.yml?branch=main&style=flat-square&label=family)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/family.yml)
-[![tests](https://img.shields.io/github/actions/workflow/status/tmux-revamped/tmux-ram-revamped/tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/tests.yml)
+[![ci](https://img.shields.io/github/actions/workflow/status/tmux-revamped/tmux-ram-revamped/ci.yml?branch=main&style=flat-square&label=ci)](https://github.com/tmux-revamped/tmux-ram-revamped/actions/workflows/ci.yml)
 [![release](https://img.shields.io/github/v/release/tmux-revamped/tmux-ram-revamped?style=flat-square&label=release)](https://github.com/tmux-revamped/tmux-ram-revamped/releases/latest)
 [![openssf scorecard](https://img.shields.io/ossf-scorecard/github.com/tmux-revamped/tmux-ram-revamped?style=flat-square&label=openssf%20scorecard)](https://scorecard.dev/viewer/?uri=github.com/tmux-revamped/tmux-ram-revamped)
 [![license](https://img.shields.io/github/license/tmux-revamped/tmux-ram-revamped?style=flat-square&label=license)](LICENSE)
 
 <p align="center">
-  <a href="#what-it-does">功能</a> |
-  <a href="#installation">安装</a> |
-  <a href="#usage">用法</a> |
-  <a href="#configuration">配置</a> |
-  <a href="#key-bindings">按键绑定</a> |
-  <a href="#how-it-works">工作原理</a>
+  <a href="#快速开始"><strong>快速开始</strong></a> &nbsp;|&nbsp;
+  <a href="#用法">用法</a> &nbsp;|&nbsp;
+  <a href="#工作原理">工作原理</a> &nbsp;|&nbsp;
+  <a href="#界面">界面</a>
 </p>
 
 </div>
 
-**18 个占位符。每 5 秒采样一次，较慢的详细指标每 60 秒采样一次。只用系统自带的工具。已在 macOS 和 Linux 上测试。**
+<p align="center">
+  <img src="screens/hero.gif" alt="ram-revamped 按档位颜色显示已用内存，打开监视器弹窗，并切换到 Nerd Font 标签、图表和 options 渲染模式" width="800">
+</p>
+
+```console
+$ ram-revamped refresh
+Refreshed. 88% of the memory is in use.
+$ ram-revamped status text
+RAM 88% used, 12% available, swap 75%
+```
+
+**18** 个占位符，**2** 种渲染模式，支持 macOS 和 Linux，需要 tmux **3.2** 或更高版本。
 
 ---
 
-<a id="what-it-does"></a>
+## 快速开始
 
-## 功能
+### 前提条件
 
-插件把内存数据放进状态栏：已用和可用内存、交换空间、内存压力、内存构成、占用最多的进程，以及最近用量的火花线。状态栏读取 tmux 已经保存的值，下一次采样由后台进程完成。`prefix + M-r` 会在弹出窗口中打开内存监视器。
+| 工具 | 版本 | 用途 |
+|:-----|:--------|:---------|
+| tmux | 3.2 或更高 | 家族的最低版本，弹窗也需要它 |
+| btop, htop | 可选 | 弹窗打开的监视器；没有时在 macOS 上显示 `vm_stat 1`，在 Linux 上显示 `free -h -s 1` |
+| gum | 可选 | `ram-revamped` 的菜单、表格和颜色；没有它时所有命令输出纯文本 |
 
-## 环境要求
+它在 Linux 和 macOS 上运行，BSD、GNU、uutils 或 BusyBox 工具均可。每个数值都来自系统自带的来源：
 
-| 项目 | 版本或说明 |
-|:------------|:----------------|
-| tmux | 3.2 或更高版本 |
-| bash | 3.2 或更高版本，因此 macOS 自带的 `/bin/bash` 可以使用 |
-| 操作系统 | Apple Silicon 和 Intel 上的 macOS，x86_64 和 arm64 上的 Linux |
-| 核心工具 | BSD、GNU 或 uutils coreutils |
-| 内存数据来源 | macOS 上为 `vm_stat` 和 `sysctl`，Linux 上为 `/proc/meminfo` 和 `/proc/pressure/memory` |
-| `btop` 或 `htop` | 可选，用于详情弹窗 |
+| 数值 | macOS | Linux |
+|:-----|:------|:------|
+| 已用、可用、构成、大小 | `vm_stat` | `/proc/meminfo` |
+| 交换空间 | `sysctl vm.swapusage` | `/proc/meminfo` |
+| 内存压力 | `vm_stat` 的 wired 和压缩页面 | `/proc/pressure/memory` |
+| 提交比例 | 无：macOS 没有提交上限 | `/proc/meminfo` |
+| 可回收 | `vm_stat` 的 purgeable 和文件支持页面 | `/proc/meminfo` 的缓存、缓冲区和可回收 slab |
+| 最大进程 | `ps` | `ps` |
 
-<a id="installation"></a>
+缺少来源时，对应的占位符为空，`ram-revamped doctor` 会指出是哪一个。
 
-## 安装
+### 安装
 
-使用 [TPM](https://github.com/tmux-plugins/tpm) 时，把插件和占位符加入 `~/.tmux.conf`，然后按 `prefix + I`：
+使用 [TPM](https://github.com/tmux-plugins/tpm) 时，把插件加入 `~/.tmux.conf`，然后按 `prefix + I`：
 
 ```tmux
 set -g @plugin 'tmux-revamped/tmux-ram-revamped'
-set -g status-right '#{ram_icon} #{ram_percentage}'
 ```
 
-不使用 TPM 时，克隆仓库，并在 `~/.tmux.conf` 中设置 `status-right` 的那一行之后运行入口脚本：
+手动安装时，克隆仓库，并在 `~/.tmux.conf` 中运行入口脚本：
 
-```sh
+```bash
 git clone https://github.com/tmux-revamped/tmux-ram-revamped ~/.tmux/plugins/tmux-ram-revamped
 ```
 
@@ -65,14 +76,22 @@ git clone https://github.com/tmux-revamped/tmux-ram-revamped ~/.tmux/plugins/tmu
 run-shell ~/.tmux/plugins/tmux-ram-revamped/ram-revamped.tmux
 ```
 
-<a id="usage"></a>
+请在插件加载之前设置 `status-left` 或 `status-right`。插件只在加载时替换一次其中的占位符。
+
+在克隆的目录中运行 `make install`，还会把 `ram-revamped` 放进 `~/.local/bin`，把它的 man 手册和补全放在 `~/.local/share` 下。
+
+### 验证
+
+```bash
+~/.tmux/plugins/tmux-ram-revamped/bin/ram-revamped doctor
+```
 
 ## 用法
 
-把以下任意占位符放进 `status-left` 或 `status-right`。数据来源缺失的占位符不显示任何内容。
+本插件显示已用内存，以及可用内存、交换空间、内存压力、内存构成、最大进程和最近采样的图表。状态栏显示 tmux 已经保存的值，后台采样负责更新它。
 
 | 占位符 | 输出 |
-|:------------|:-------|
+|:-------|:-----|
 | `#{ram_percentage}` | 已用内存，例如 `61%` |
 | `#{ram_icon}` | 已用内存所处档位的图标 |
 | `#{ram_fg_color}` | 已用内存档位的前景样式 |
@@ -85,32 +104,101 @@ run-shell ~/.tmux/plugins/tmux-ram-revamped/ram-revamped.tmux
 | `#{ram_pressure_fg_color}` | 内存压力的前景样式，使用与已用内存相同的阈值 |
 | `#{ram_breakdown}` | 以 GB 为单位的内存构成，例如 `W 3.2G C 1.1G I 2.0G F 4.5G` |
 | `#{ram_absolute}` | 已用与总量，例如 `12.3G / 32G` |
-| `#{ram_commit}` | 已提交内存与提交上限之比，仅限 Linux |
-| `#{ram_reclaimable}` | 页缓存、缓冲区和可回收 slab 之和，仅限 Linux，例如 `4.0G` |
+| `#{ram_commit}` | 已提交内存与提交上限之比；macOS 没有提交上限，因此为空 |
+| `#{ram_reclaimable}` | 在 Linux 上是页缓存、缓冲区和可回收 slab 之和，在 macOS 上是 purgeable 与文件支持页面之和，例如 `4.0G` |
 | `#{ram_top_process}` | 常驻内存最大的进程，例如 `firefox 1.2G` |
 | `#{ram_graph}` | 最近采样的火花线，例如 `▁▂▄▆█` |
 | `#{ram_trend}` | 历史窗口内的 `↑`、`↓` 或 `→` |
 | `#{ram_text}` | 供屏幕阅读器使用的纯文本行，例如 `RAM 61% used, 40% available, swap 3%` |
 
-一个更完整的状态栏，在末尾重置样式：
+把占位符放进状态栏：
 
 ```tmux
-set -g status-right '#{ram_fg_color}#{ram_icon} #{ram_percentage}#[default] #{ram_graph}'
+set -g @ram_revamped_low_fg_color '#[fg=green]'
+set -g @ram_revamped_medium_fg_color '#[fg=yellow]'
+set -g @ram_revamped_high_fg_color '#[fg=red]'
+
+set -g status-right '#{ram_fg_color}#{ram_icon} #{ram_percentage}#[default] '
 ```
 
-插件还可以在 shell 中响应两条命令：`~/.tmux/plugins/tmux-ram-revamped/src/ram.sh doctor` 报告平台和找到的数据来源，`ram.sh popup` 打开监视器。
+同样的示例见 [examples/status-right.tmux.conf](examples/status-right.tmux.conf)。
 
-<a id="configuration"></a>
+### 标签和宽度
+
+`@ram_revamped_<metric>_label` 在某个指标之前显示图标或文字，仅当该值非空时显示。把 `@ram_revamped_icons` 设为 `nerd` 会为下面每个指标加上 Nerd Font 符号标签。指标自己的标签优先于这一套符号，设为空的标签表示默认值，所以符号保留。默认的 `ascii` 不加标签。
+
+| 指标 | `nerd` 图标 |
+|:-----|:------------|
+| `percentage` | U+F029A |
+| `available` | U+F035B |
+| `swap` | U+F0FB4 |
+| `pressure` | U+F0F86 |
+| `breakdown` | U+F07AF |
+| `absolute` | U+F01BC |
+| `commit` | U+F04A0 |
+| `reclaimable` | U+F044C |
+| `top_process` | U+F08C6 |
+| `graph` | U+F07B1 |
+| `trend` | U+F0535 |
+
+把 `@ram_revamped_fixed_width` 设为 `on` 会把已用、可用和交换空间的百分比在左侧补齐到 4 个字符，从 `9%` 变为 `42%` 时状态栏的其余部分不会移动。`@ram_revamped_<metric>_width` 设置某个指标的宽度，并优先于固定宽度。较长的值不会被截断。
+
+### 渲染模式
+
+默认情况下，每个占位符会变成一个 `#()` 调用，tmux 每次重绘状态栏时都会重新运行它。把 `@ram_revamped_render` 设为 `options` 后，每个占位符会变成读取选项，例如 `#{E:@ram_revamped_out_percentage}`。每个服务器只有一个后台进程，每 `@ram_revamped_interval` 秒采样一次，并在一次 tmux 调用中写入所有值，所以这些值会同时更新。
+
+```tmux
+set -g @ram_revamped_render 'options'
+set -g @ram_revamped_fixed_width 'on'
+```
+
+### 档位颜色
+
+档位样式默认为空，所以在设置之前 `#{ram_fg_color}`、`#{ram_bg_color}` 和 `#{ram_pressure_fg_color}` 不输出任何内容。下面的配色把低用量对应绿色，中等对应黄色，高用量对应红色：
+
+| 主题 | 低 | 中 | 高 |
+|:-----|:---|:---|:---|
+| Catppuccin Mocha | `#a6e3a1` | `#f9e2af` | `#f38ba8` |
+| Dracula | `#50fa7b` | `#f1fa8c` | `#ff5555` |
+| Nord | `#a3be8c` | `#ebcb8b` | `#bf616a` |
+| Gruvbox Dark | `#b8bb26` | `#fabd2f` | `#fb4934` |
+| Tokyo Night | `#9ece6a` | `#e0af68` | `#f7768e` |
+| Solarized Dark | `#859900` | `#b58900` | `#dc322f` |
+
+每个值都写成样式，例如 `set -g @ram_revamped_low_fg_color '#[fg=#a6e3a1]'`。
+
+| 命令 | 作用 |
+|:--------|:-------------|
+| `ram-revamped apply` | 绑定弹窗按键并立即替换占位符；tmux 加载插件时入口脚本会运行它 |
+| `ram-revamped list` | 显示 `apply` 将发送的每条命令，不做任何更改；`--json` 输出一个对象 |
+| `ram-revamped status NAME` | 输出一个占位符，例如 `percentage`、`swap` 或 `graph`；状态栏会运行它 |
+| `ram-revamped refresh` | 立即采样内存，并说明已用多少 |
+| `ram-revamped card` | 立即读取全部数值，每个数值显示一行 |
+| `ram-revamped popup` | 在 tmux 弹窗中打开内存监视器：btop，没有则 htop，再没有则显示系统自带的数值；弹窗按键会运行它 |
+| `ram-revamped daemon` | 为 `options` 渲染模式在每个周期发布占位符；`apply` 会启动它 |
+| `ram-revamped doctor` | 每个依赖一行：每个数值来自的工具或文件、弹窗打开的监视器，以及未改动的按键 |
+| `ram-revamped version` | 版本，以及 tmux 的版本 |
+| `ram-revamped help` | 帮助页；`man ram-revamped` 记录了同样的命令和设置 |
+| `ram-revamped` | 在终端上显示菜单 |
 
 ## 配置
 
-在插件加载之前于 `~/.tmux.conf` 中设置选项。
+每个选项也可以写成带连字符的命令选项，例如 `--interval 2`，或环境变量，例如 `RAM_REVAMPED_INTERVAL`；命令行优先于环境变量，环境变量优先于 tmux 选项。空的 tmux 选项表示使用默认值。`doctor` 会指出值无法识别的设置。传给 `apply` 的选项会随弹窗按键和每次状态调用一起生效。
+
+### 采样
 
 | 选项 | 默认值 | 含义 |
-|:-------|:--------|:--------|
+|:-----|:-------|:-----|
 | `@ram_revamped_interval` | `5` | 采样值保持有效的秒数 |
-| `@ram_revamped_detail_interval` | `60` | 压力、构成、绝对值、提交、可回收和最大进程等数值保持有效的秒数 |
-| `@ram_revamped_render` | 未设置 | `options` 把每个占位符变成选项读取，由每个服务器一个后台进程写入 |
+| `@ram_revamped_detail_interval` | `60` | 内存压力和最大进程保持有效的秒数 |
+| `@ram_revamped_render` | `jobs` | `options` 读取已发布的选项，而不是运行 `#()` 调用；其他任何值都视为 `jobs` |
+| `@ram_revamped_history_size` | `30` | 为火花线和趋势保留的采样数 |
+| `@ram_revamped_enable_logging` | 未设置 | `1` 把没有读到数值的采样写入 `~/.tmux/ram-revamped-logs/`；只能作为 tmux 选项设置 |
+
+### 档位和警告
+
+| 选项 | 默认值 | 含义 |
+|:-----|:-------|:-----|
 | `@ram_revamped_medium_thresh` | `50` | 档位变为 medium 的百分比 |
 | `@ram_revamped_high_thresh` | `85` | 档位变为 high 的百分比 |
 | `@ram_revamped_low_icon` | `▰▱▱` | low 档位的图标 |
@@ -122,6 +210,18 @@ set -g status-right '#{ram_fg_color}#{ram_icon} #{ram_percentage}#[default] #{ra
 | `@ram_revamped_low_bg_color` | 空 | low 档位的背景样式 |
 | `@ram_revamped_medium_bg_color` | 空 | medium 档位的背景样式 |
 | `@ram_revamped_high_bg_color` | 空 | high 档位的背景样式 |
+| `@ram_revamped_swap_warn_thresh` | `1` | 显示交换空间警告的百分比 |
+| `@ram_revamped_swap_active_icon` | 空 | `#{ram_swap_icon}` 显示的图标 |
+| `@ram_revamped_swap_active_color` | 空 | `#{ram_swap_color}` 显示的样式 |
+| `@ram_revamped_trend_threshold` | `3` | 趋势箭头离开 `→` 所需的变化，单位为百分点 |
+| `@ram_revamped_trend_up` | `↑` | 上升趋势的符号 |
+| `@ram_revamped_trend_down` | `↓` | 下降趋势的符号 |
+| `@ram_revamped_trend_flat` | `→` | 平稳趋势的符号 |
+
+### 格式和标签
+
+| 选项 | 默认值 | 含义 |
+|:-----|:-------|:-----|
 | `@ram_revamped_percentage_format` | `%s%%` | 已用内存的 printf 格式 |
 | `@ram_revamped_available_format` | `%s%%` | 可用内存的 printf 格式 |
 | `@ram_revamped_swap_format` | `%s%%` | 交换空间的 printf 格式 |
@@ -131,172 +231,156 @@ set -g status-right '#{ram_fg_color}#{ram_icon} #{ram_percentage}#[default] #{ra
 | `@ram_revamped_commit_format` | `%s%%` | 提交比例的 printf 格式 |
 | `@ram_revamped_reclaimable_format` | `%s` | 可回收大小的 printf 格式 |
 | `@ram_revamped_top_process_format` | `%s %s` | 进程名和大小的 printf 格式 |
-| `@ram_revamped_history_size` | `30` | 为火花线和趋势保留的采样数 |
-| `@ram_revamped_trend_threshold` | `3` | 趋势箭头离开 `→` 所需的变化，单位为百分点 |
-| `@ram_revamped_trend_up` | `↑` | 上升趋势的符号 |
-| `@ram_revamped_trend_down` | `↓` | 下降趋势的符号 |
-| `@ram_revamped_trend_flat` | `→` | 平稳趋势的符号 |
-| `@ram_revamped_swap_warn_thresh` | `1` | 显示交换空间警告的百分比 |
-| `@ram_revamped_swap_active_icon` | 空 | `#{ram_swap_icon}` 显示的图标 |
-| `@ram_revamped_swap_active_color` | 空 | `#{ram_swap_color}` 显示的样式 |
 | `@ram_revamped_icons` | `ascii` | `nerd` 为每个值加上 Nerd Font 符号标签 |
-| `@ram_revamped_<metric>_label` | 未设置 | 显示在某个值之前的文本，仅当该值非空时显示。`''` 去掉该值的 Nerd Font 标签 |
+| `@ram_revamped_<metric>_label` | 空 | 显示在某个值之前的文本，仅当该值非空时显示 |
 | `@ram_revamped_fixed_width` | `off` | `on` 把百分比补齐到 4 个字符，从 `9%` 变为 `42%` 时状态栏不会移动 |
-| `@ram_revamped_<metric>_width` | 未设置 | 把某个值补齐到此字符数。较长的值不会被截断 |
+| `@ram_revamped_<metric>_width` | 空 | 把某个值补齐到此字符数。较长的值不会被截断 |
+
+### 弹窗
+
+| 选项 | 默认值 | 含义 |
+|:-----|:-------|:-----|
 | `@ram_revamped_popup_key` | `M-r` | 打开详情弹窗的前缀键。`off` 不绑定任何键 |
 | `@ram_revamped_popup_width` | `80%` | 弹窗宽度 |
 | `@ram_revamped_popup_height` | `60%` | 弹窗高度 |
-| `@ram_revamped_enable_logging` | `0` | `1` 把错误写入 `~/.tmux/ram-revamped-logs/` |
-
-`<metric>` 为 `percentage`、`available`、`swap`、`pressure`、`breakdown`、`absolute`、`commit`、`reclaimable`、`top_process`、`graph` 和 `trend` 之一。
-
-<details>
-<summary><strong>常见主题的档位颜色</strong></summary>
-
-### Catppuccin Mocha
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#a6e3a1]'
-set -g @ram_revamped_medium_fg_color '#[fg=#f9e2af]'
-set -g @ram_revamped_high_fg_color '#[fg=#f38ba8]'
-```
-
-### Dracula
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#50fa7b]'
-set -g @ram_revamped_medium_fg_color '#[fg=#f1fa8c]'
-set -g @ram_revamped_high_fg_color '#[fg=#ff5555]'
-```
-
-### Nord
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#a3be8c]'
-set -g @ram_revamped_medium_fg_color '#[fg=#ebcb8b]'
-set -g @ram_revamped_high_fg_color '#[fg=#bf616a]'
-```
-
-### Gruvbox Dark
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#b8bb26]'
-set -g @ram_revamped_medium_fg_color '#[fg=#fabd2f]'
-set -g @ram_revamped_high_fg_color '#[fg=#fb4934]'
-```
-
-### Tokyo Night
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#9ece6a]'
-set -g @ram_revamped_medium_fg_color '#[fg=#e0af68]'
-set -g @ram_revamped_high_fg_color '#[fg=#f7768e]'
-```
-
-### Solarized Dark
-
-```tmux
-set -g @ram_revamped_low_fg_color '#[fg=#859900]'
-set -g @ram_revamped_medium_fg_color '#[fg=#b58900]'
-set -g @ram_revamped_high_fg_color '#[fg=#dc322f]'
-```
-
-</details>
 
 ### 内部状态
 
-以下选项由插件自行管理，请勿设置。
+以下选项由插件自己写入，请勿设置。
 
-| 选项 | 内容 |
-|:-------|:------|
+| 选项 | 保存内容 |
+|:-----|:---------|
 | `@ram_revamped_published` | 状态栏用到的指标，在加载时记录，使选项模式只写入这些指标 |
 | `@ram_revamped_history` | `#{ram_graph}` 和 `#{ram_trend}` 所用的最近已用内存采样 |
 | `@ram_revamped_out_<metric>` | 选项模式下每个指标渲染后的值 |
 | `@ram_revamped_ticker_pid` | 选项模式后台进程的进程 ID |
-| `@ram_revamped_option_names` | 该进程每轮用一次 tmux 调用读取的选项 |
-| `@ram_revamped_percent` 及其他采样值 | 缓存的读数，每个都带有 `_ts` 时间戳 |
-
-<a id="key-bindings"></a>
+| `@ram_revamped_percent` 等数值、`_ts`、`_lock` | 保存的采样、每次读取的时间和刷新锁 |
 
 ## 按键绑定
 
-| 按键 | 作用 | 选项 |
-|:----|:-------|:-------|
-| `prefix + M-r` | 打开详情弹窗 | `@ram_revamped_popup_key` |
+| 按键 | 动作 | 默认 |
+|:-----|:-----|:-----|
+| `prefix + M-r` | 在弹窗中打开内存监视器：btop，没有则 htop，再没有则显示系统自带的数值 | 已绑定 |
 
-`M-r` 是 tmux-revamped 家族分配给本插件的唯一按键。2.0.0 之前，弹窗位于 `prefix + M`，tmux 把这个键用于清除已标记的窗格。要保留旧按键：
+`@ram_revamped_popup_key` 可以指定其他按键，设为 `off` 则不绑定。默认按键已被占用时不会改动它，`ram-revamped doctor` 会说明这一点。
 
-```tmux
-set -g @ram_revamped_popup_key 'M'
-```
-
-弹窗在安装了 `btop` 或 `htop` 时运行它们，否则在 macOS 上运行 `vm_stat 1`，在 Linux 上运行 `free -h -s 1`。
-
-<a id="how-it-works"></a>
+<a id="工作原理"></a>
 
 ## 工作原理
 
-**作业模式，即默认模式。** 入口脚本把每个占位符替换为调用 [`src/ram.sh`](src/ram.sh) 的 `#()`。这个调用立即输出缓存的值。当缓存比 `@ram_revamped_interval` 更旧时，它还会启动一个分离的进程，采集新样本并存入 tmux 选项。一个锁选项防止在采样进行时启动第二个采样进程。
+tmux 加载插件时，[`ram-revamped.tmux`](ram-revamped.tmux) 运行一次。它把 `status-left` 和 `status-right` 用到的指标记录在 `@ram_revamped_published` 中，然后把每个占位符替换成对 [`bin/ram-revamped`](bin/ram-revamped) 的调用；在 `options` 模式下则替换成选项读取，并启动后台进程。
 
-**选项模式。** tmux 每次重绘都会重新运行所有 `#()`，当多个插件共用状态栏时，这可能达到大约每秒一次。把 `@ram_revamped_render` 设为 `options` 后，每个占位符都变成类似 `#{E:@ram_revamped_out_percentage}` 的读取。每个服务器一个后台进程每 `@ram_revamped_interval` 秒采样一次，用一次 tmux 调用写入状态栏用到的所有值，并只刷新客户端一次。服务器停止时它退出，重新加载配置时它被替换。
+在默认模式下，每个 `#()` 调用立即返回保存的采样。采样比间隔旧时，调用会取得锁并在后台开始刷新，所以同一时间只有一个刷新在运行。一次采样在 macOS 上读取一次 `vm_stat` 和 `sysctl`，在 Linux 上读取一次 `/proc/meminfo`，由一个 `awk` 算出全部数值，并用一次 tmux 调用写入。Linux 上的内存压力和最大进程各需要多读一次，所以只为状态栏用到的占位符读取，每 `@ram_revamped_detail_interval` 秒一次。
 
-```tmux
-set -g @ram_revamped_render 'options'
-set -g @ram_revamped_fixed_width 'on'
-```
+内存压力在两个系统上的含义不同：在 Linux 上是 `/proc/pressure/memory` 的 10 秒平均值，即有任务等待内存的时间比例；在 macOS 上是 wired 页面和压缩器占用页面的比例。内存构成在 macOS 上是 wired、压缩、inactive 和 free，在 Linux 上是缓冲区、0、缓存和 free。
 
-**数据从哪里来。**
+最大进程的名称来自 `ps`，任何用户都能控制它，所以在送到状态栏之前会把其中每个 `#` 加倍。读取、采样和格式化的代码在 [`lib/ram.sh`](lib/ram.sh)，设置表在 [`lib/state.sh`](lib/state.sh)。
 
-| 数值 | macOS | Linux |
-|:-------|:------|:------|
-| 已用 | `vm_stat` 中 active、wired 和 compressed 的页面 | `/proc/meminfo` 中 `MemTotal` 减去 `MemAvailable` |
-| 可用 | free、inactive 和 speculative 的页面 | `MemAvailable` |
-| 交换空间 | `sysctl vm.swapusage` | `SwapTotal` 和 `SwapFree` |
-| 压力 | wired 和 compressed 页面占全部页面的比例 | `/proc/pressure/memory` 中的 `some avg10`，即最近 10 秒内因等待内存而停顿的时间比例 |
-| 构成 | wired、compressed、inactive 和 free | 同样四个位置依次为缓冲区、`0`、缓存和 free |
-| 最大进程 | `ps axo rss=,comm=` | `ps axo rss=,comm=` |
+<a id="界面"></a>
 
-进程名来自 `ps`，机器上的任何用户都能控制它，因此在 tmux 将其作为格式读取之前，名称中的每个 `#` 都会被加倍。数字在 C 区域设置下格式化，所以使用逗号作小数点的区域设置仍然显示 `1.5G`。
+## 界面
 
 <details>
-<summary><strong>Nerd Font 标签</strong></summary>
+<summary>所有界面，在真实的 tmux 中用 <code>make screens</code> 录制，每个按键显示在状态栏上</summary>
+<br>
 
-```tmux
-set -g @ram_revamped_icons 'nerd'
-set -g @ram_revamped_percentage_label ''
-```
+<table>
+<tr>
+<td width="50%" valign="top"><img src="screens/status.png" alt="ram-revamped: 已用内存及其档位图标和颜色、可用内存和交换空间警告"><br><sub>已用内存及其档位图标和颜色、可用内存和交换空间警告，来自 <code>hero.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/popup.png" alt="ram-revamped: prefix M-r 在弹窗中打开内存监视器"><br><sub><code>prefix M-r</code> 在弹窗中打开内存监视器，来自 <code>hero.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/icons.png" alt="ram-revamped: 把 @ram_revamped_icons 设为 nerd 会为每个指标加上符号标签"><br><sub>把 <code>@ram_revamped_icons</code> 设为 <code>nerd</code> 会为每个指标加上符号标签，来自 <code>hero.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/graph.png" alt="ram-revamped: 图表、趋势和文本行"><br><sub>图表、趋势和文本行，来自 <code>hero.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/options.png" alt="ram-revamped: 在 options 渲染模式下，每个占位符读取一个 tmux 选项"><br><sub>在 <code>options</code> 渲染模式下，每个占位符读取一个 tmux 选项，来自 <code>hero.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/card.png" alt="ram-revamped: card 显示每个数值"><br><sub><code>card</code> 显示每个数值，来自 <code>features.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/details.png" alt="ram-revamped: 已用与总量、带档位颜色的内存压力、可回收大小和最大进程"><br><sub>已用与总量、带档位颜色的内存压力、可回收大小和最大进程，来自 <code>features.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/breakdown.png" alt="ram-revamped: 内存构成和提交比例"><br><sub>内存构成和提交比例，来自 <code>features.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/format.png" alt="ram-revamped: @ram_revamped_percentage_format 决定已用百分比的格式"><br><sub><code>@ram_revamped_percentage_format</code> 决定已用百分比的格式，来自 <code>features.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/fixed.png" alt="ram-revamped: @ram_revamped_fixed_width 把百分比补齐到 4 个字符"><br><sub><code>@ram_revamped_fixed_width</code> 把百分比补齐到 4 个字符，来自 <code>features.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/labels.png" alt="ram-revamped: 某个指标自己的标签"><br><sub>某个指标自己的标签，来自 <code>features.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/tiers.png" alt="ram-revamped: @ram_revamped_medium_thresh 和 @ram_revamped_high_thresh 移动档位的界线"><br><sub><code>@ram_revamped_medium_thresh</code> 和 <code>@ram_revamped_high_thresh</code> 移动档位的界线，来自 <code>features.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/popup-key.png" alt="ram-revamped: @ram_revamped_popup_key 为弹窗指定另一个按键"><br><sub><code>@ram_revamped_popup_key</code> 为弹窗指定另一个按键，来自 <code>features.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/status-command.png" alt="ram-revamped: status text 和 status graph 各输出一个占位符"><br><sub><code>status text</code> 和 <code>status graph</code> 各输出一个占位符，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/refresh.png" alt="ram-revamped: refresh 立即采样内存"><br><sub><code>refresh</code> 立即采样内存，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/list.png" alt="ram-revamped: list 显示每个绑定"><br><sub><code>list</code> 显示每个绑定，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/json.png" alt="ram-revamped: list --json 把同样的内容输出为一个对象"><br><sub><code>list --json</code> 把同样的内容输出为一个对象，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/doctor.png" alt="ram-revamped: doctor"><br><sub><code>doctor</code>，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/menu.png" alt="ram-revamped: 菜单"><br><sub>菜单，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/menu-card.png" alt="ram-revamped: 从菜单打开的卡片"><br><sub>从菜单打开的卡片，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/accent.png" alt="ram-revamped: 来自 RAM_REVAMPED_ACCENT 的强调色"><br><sub>来自 <code>RAM_REVAMPED_ACCENT</code> 的强调色，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/plain-menu.png" alt="ram-revamped: 没有 gum 时的菜单"><br><sub>没有 gum 时的菜单，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/plain-doctor.png" alt="ram-revamped: 没有 gum 时从菜单打开的 doctor"><br><sub>没有 gum 时从菜单打开的 <code>doctor</code>，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/plain-card.png" alt="ram-revamped: 没有 gum 时的 card"><br><sub>没有 gum 时的 <code>card</code>，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/version.png" alt="ram-revamped: 版本"><br><sub>版本，来自 <code>stills.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/error.png" alt="ram-revamped: 未知命令"><br><sub>未知命令，来自 <code>stills.tape</code></sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/themes.png" alt="ram-revamped: 六种主题下的标题"><br><sub>六种主题下的标题，来自 <code>themes.tape</code></sub></td>
+<td width="50%" valign="top"><img src="screens/help.png" alt="ram-revamped: 帮助页"><br><sub>帮助页，来自 <code>help.tape</code></sub></td>
+</tr>
+</table>
 
-| 指标 | 符号 |
-|:-------|:------|
-| `percentage` | `md-gauge` |
-| `available` | `md-memory` |
-| `swap` | `md-file_swap` |
-| `pressure` | `U+F0F86` |
-| `breakdown` | `md-chart_donut` |
-| `absolute` | `md-database` |
-| `commit` | `md-sigma` |
-| `reclaimable` | `md-recycle` |
-| `top_process` | `md-application` |
-| `graph` | `md-chart_line_variant` |
-| `trend` | `md-trending_up` |
+录制时运行的是真实的插件和 tmux。`vm_stat`、`sysctl` 和 `ps` 由小脚本代替，所以画面上的数值来自这些脚本。
 
 </details>
 
+## 可移植性
+
+插件是 POSIX `sh`。CI 在下面每一行上运行全部测试。
+
+| Shell | 状态 |
+|:------|:-------|
+| `dash`、macOS 上的 `/bin/sh` | 支持 |
+| `bash` 3.2 和 5.x、系统自带的 `zsh` 和 Homebrew 的 `zsh` | 支持 |
+
+| 系统 | 状态 |
+|:-------|:-------|
+| macOS | Apple Silicon 和 Intel 上的 Tahoe，使用系统自带的工具、Homebrew 的 GNU 工具和 Homebrew 的 uutils |
+| Linux | x86_64 和 arm64 上的 Ubuntu 26.04，使用 GNU coreutils、uutils 和 BusyBox |
+
 ## 开发
 
-| 命令 | 作用 |
+| 命令 | 运行内容 |
 |:--------|:-------------|
-| `make test` | 运行 bats 测试套件 |
-| `make lint` | 对所有 shell 文件运行 shellcheck |
-| `make coverage` | 用 kcov 测量行覆盖率，低于 95% 时失败，在 Linux 上运行 |
+| `make fmt` | 对每个脚本运行 shfmt `-i 2` |
+| `make lint` | shfmt、ShellCheck、mandoc、yamllint 和 actionlint，零告警 |
+| `make test` | 在系统 `sh` 下运行 bats 测试 |
+| `make test-all` | 在每个已安装的 shell 下运行测试，macOS 上包括 bash 和 zsh 的两种构建 |
+| `make test-linux` | 在 Ubuntu 容器中运行测试 |
+| `make coverage` | 在这台 Mac 和 Ubuntu 容器中运行 bashcov，合并后以 100% 为门槛 |
+| `make screens` | 用 VHS 在 tmux 中从真实插件录制上面的界面，在 macOS 上运行 |
+| `make install` | 把命令、man 手册和补全安装到 `PREFIX` 下 |
 
 在 macOS 上，运行 `brew bundle` 会根据 [`Brewfile`](Brewfile) 安装这些目标用到的所有工具。
 
-测试套件需要 `bats-core` 和 tmux。
+提交遵循 Conventional Commits 格式，直接进入 `main`。`main` 上的 `ci` 通过后，`release.yml` 运行 semantic-release：自上一个标签以来的每个 `feat` 或 `fix` 都会发布新版本，更新版本常量，并把说明写进 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## 许可证
 
-[MIT](LICENSE)
+[MIT](LICENSE)，copyright Gustavo Franco。
 
 <!-- family:begin -->
 

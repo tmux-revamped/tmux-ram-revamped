@@ -1,0 +1,150 @@
+$ ram-revamped help
+ram-revamped - memory, swap and pressure in the status bar
+
+usage:
+  ram-revamped apply          bind the key and fill the placeholders
+  ram-revamped list           print what apply would send to tmux
+  ram-revamped status NAME    print one placeholder: percentage, icon,
+                              fg_color, bg_color, available, swap,
+                              swap_icon, swap_color, pressure,
+                              pressure_fg_color, breakdown, absolute,
+                              commit, reclaimable, top_process, graph,
+                              trend or text
+  ram-revamped refresh        sample the memory now for the status line
+  ram-revamped card           print every figure as a table
+  ram-revamped popup          open a memory monitor in a tmux popup
+  ram-revamped daemon         publish the placeholders on every tick, for
+                              the options render mode
+  ram-revamped doctor         check this machine
+  ram-revamped version        print the version
+  ram-revamped help           print this page
+
+keys:
+  --popup-key KEY             the prefix key for the monitor popup, or off
+  --popup-width SIZE          the popup's width, such as 80%
+  --popup-height SIZE         the popup's height, such as 60%
+
+sampling:
+  --interval SECONDS          how long a sample stays fresh
+  --detail-interval SECONDS   how long the pressure and the top process
+                              stay fresh
+  --render MODE               jobs or options
+  --history-size COUNT        samples kept for the graph and the trend
+
+tiers:
+  --medium-thresh PERCENT     where the medium tier starts
+  --high-thresh PERCENT       where the high tier starts
+  --TIER-icon TEXT            what #{ram_icon} prints in the low, medium
+                              or high tier
+  --TIER-fg-color STYLE       what #{ram_fg_color} prints in each tier
+  --TIER-bg-color STYLE       what #{ram_bg_color} prints in each tier
+  --swap-warn-thresh PERCENT  swap in use that turns the swap warning on
+  --swap-active-icon TEXT     what #{ram_swap_icon} prints during it
+  --swap-active-color STYLE   what #{ram_swap_color} prints during it
+  --trend-threshold POINTS    change that moves the trend off steady
+  --trend-up TEXT             the rising trend
+  --trend-down TEXT           the falling trend
+  --trend-flat TEXT           the steady trend
+
+formats:
+  --percentage-format FORMAT  printf format of the used percent
+  --available-format FORMAT   printf format of the available percent
+  --swap-format FORMAT        printf format of the swap percent
+  --pressure-format FORMAT    printf format of the pressure
+  --breakdown-format FORMAT   printf format of the four breakdown sizes
+  --absolute-format FORMAT    printf format of used, then total
+  --commit-format FORMAT      printf format of the commit ratio
+  --reclaimable-format FORMAT printf format of the reclaimable size
+  --top-process-format FORMAT printf format of the name, then its size
+  --icons SET                 ascii, or nerd for a Nerd Font glyph before
+                              every metric
+  --METRIC-label TEXT         the label before one metric
+  --fixed-width on|off        on pads every percent to four characters
+  --METRIC-width COUNT        the width of one metric
+
+output:
+  --json                      list prints one JSON object
+  --theme NAME                the look: kodougu, catppuccin-mocha,
+                              catppuccin-latte, dracula, nord, gruvbox,
+                              tokyo-night or mono
+
+environment:
+  RAM_REVAMPED_<SETTING>   the same as the option of that name, such as
+                           RAM_REVAMPED_INTERVAL for --interval
+  RAM_REVAMPED_THEME       the look, when --theme is not given
+  RAM_REVAMPED_ACCENT      a colour such as #CBA6F7 for the accent
+  KODOUGU_THEME            the family look, when neither is given
+  KODOUGU_ACCENT           the family accent, when the tool's is unset
+  NO_COLOR                 turn colour off
+
+tmux options:
+  @ram_revamped_popup_key           the monitor popup key (default M-r)
+  @ram_revamped_popup_width         width of the popup (default 80%)
+  @ram_revamped_popup_height        height of the popup (default 60%)
+  @ram_revamped_interval            seconds a sample stays fresh
+                                    (default 5)
+  @ram_revamped_detail_interval     seconds the pressure and the top
+                                    process stay fresh (default 60)
+  @ram_revamped_render              jobs or options (default jobs)
+  @ram_revamped_history_size        samples kept (default 30)
+  @ram_revamped_medium_thresh       percent that starts the medium tier
+                                    (default 50)
+  @ram_revamped_high_thresh         percent that starts the high tier
+                                    (default 85)
+  @ram_revamped_<tier>_icon         icon of the low, medium or high tier
+                                    (default one, two or three bars)
+  @ram_revamped_<tier>_fg_color     style of #{ram_fg_color} in each tier
+                                    (default none)
+  @ram_revamped_<tier>_bg_color     style of #{ram_bg_color} in each tier
+                                    (default none)
+  @ram_revamped_swap_warn_thresh    swap percent that starts the warning
+                                    (default 1)
+  @ram_revamped_swap_active_icon    text of #{ram_swap_icon} (default none)
+  @ram_revamped_swap_active_color   style of #{ram_swap_color}
+                                    (default none)
+  @ram_revamped_trend_threshold     points of change off steady (default 3)
+  @ram_revamped_trend_up            rising trend (default an up arrow)
+  @ram_revamped_trend_down          falling trend (default a down arrow)
+  @ram_revamped_trend_flat          steady trend (default a right arrow)
+  @ram_revamped_percentage_format   format of #{ram_percentage}
+                                    (default "%s%%")
+  @ram_revamped_available_format    format of #{ram_available}
+                                    (default "%s%%")
+  @ram_revamped_swap_format         format of #{ram_swap} (default "%s%%")
+  @ram_revamped_pressure_format     format of #{ram_pressure}
+                                    (default "%s%%")
+  @ram_revamped_breakdown_format    format of #{ram_breakdown}
+                                    (default "W %sG C %sG I %sG F %sG")
+  @ram_revamped_absolute_format     format of #{ram_absolute}
+                                    (default "%s / %s")
+  @ram_revamped_commit_format       format of #{ram_commit}
+                                    (default "%s%%")
+  @ram_revamped_reclaimable_format  format of #{ram_reclaimable}
+                                    (default "%s")
+  @ram_revamped_top_process_format  format of #{ram_top_process}
+                                    (default "%s %s")
+  @ram_revamped_icons               ascii or nerd (default ascii)
+  @ram_revamped_fixed_width         on or off (default off)
+  @ram_revamped_<metric>_label      label before one metric (default none)
+  @ram_revamped_<metric>_width      width of one metric (default none)
+  @ram_revamped_enable_logging      1 writes a failed sample to a log
+                                    (unset)
+  @revamped_theme                   the family look (default kodougu)
+
+notes:
+  A metric that takes a label and a width is percentage, available, swap,
+  pressure, breakdown, absolute, commit, reclaimable, top_process, graph or
+  trend, written with dashes in an option, such as --top-process-label.
+  The placeholders are #{ram_<name>} for each name status takes. Each
+  prints the stored sample at once, and starts one background sample when
+  it is older than the interval. The pressure and the top process are read
+  only for a placeholder the status line uses. With --render options each
+  placeholder reads a tmux option that a background process fills on
+  every tick, so a status refresh starts no process.
+
+examples:
+  ram-revamped status percentage
+  ram-revamped card
+  ram-revamped --icons nerd --fixed-width on apply
+  ram-revamped list --json
+exit 0

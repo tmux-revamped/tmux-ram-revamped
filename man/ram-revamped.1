@@ -1,0 +1,351 @@
+.TH RAM-REVAMPED 1 "2026-11-19" "ram-revamped" "User Commands"
+.SH NAME
+ram-revamped \- memory, swap and pressure in the tmux status bar
+.SH SYNOPSIS
+.B ram-revamped
+.RI [ options ]
+.I command
+.RI [ name ]
+.SH DESCRIPTION
+.B ram-revamped
+shows how much memory is in use in the tmux status line, with the memory
+available, the swap in use, the memory pressure, a breakdown, the used and
+total sizes, the commit ratio, the reclaimable size, the process that holds
+the most memory, and a graph and a trend of the recent samples. macOS is
+read from vm_stat and sysctl, Linux from /proc/meminfo and
+/proc/pressure/memory.
+.PP
+The entry point
+.B ram-revamped.tmux
+runs
+.B apply
+once when tmux loads the plugin, which binds the popup key in one tmux call
+and replaces the placeholders #{ram_percentage}, #{ram_icon},
+#{ram_fg_color}, #{ram_bg_color}, #{ram_available}, #{ram_swap},
+#{ram_swap_icon}, #{ram_swap_color}, #{ram_pressure},
+#{ram_pressure_fg_color}, #{ram_breakdown}, #{ram_absolute}, #{ram_commit},
+#{ram_reclaimable}, #{ram_top_process}, #{ram_graph}, #{ram_trend} and
+#{ram_text} in status-left and status-right.
+.PP
+A status call prints the stored sample at once. When the sample is older
+than the interval it starts one in the background, so the status line never
+waits. The pressure and the top process are read only for a placeholder the
+status line uses, at the detail interval. Run with no command on a terminal,
+the tool offers a menu.
+.PP
+The pressure means different things on the two systems: on Linux it is the
+ten second average of /proc/pressure/memory, the share of time some task
+waited for memory, and on macOS it is the share of pages that are wired or
+held by the compressor. The breakdown is wired, compressed, inactive and
+free on macOS, and buffers, zero, cached and free on Linux. #{ram_commit} is
+empty on macOS, which keeps no commit limit. #{ram_reclaimable} is cached,
+buffers and reclaimable slab on Linux, and purgeable plus file-backed pages
+on macOS.
+.SH COMMANDS
+.TP
+.B apply
+Bind the popup key and replace the status placeholders now. In the options render mode it also starts the daemon.
+.TP
+.B list
+Print every tmux command apply would send, one per line, and change nothing.
+.TP
+.B status
+Print one placeholder from the stored sample: percentage, icon, fg_color, bg_color, available, swap, swap_icon, swap_color, pressure, pressure_fg_color, breakdown, absolute, commit, reclaimable, top_process, graph, trend or text. The status line runs it, and it starts a sample in the background when the stored one is older than the interval.
+.TP
+.B refresh
+Sample the memory now, read the pressure and the top process when the status line uses them, store the sample and say how much memory is in use.
+.TP
+.B card
+Read everything now and print one row per figure: used, available, swap, pressure, used of total, the breakdown, the commit ratio, the reclaimable size, the top process, the history and the trend.
+.TP
+.B popup
+Open a memory monitor in a tmux popup: btop, else htop, else vm_stat 1 on macOS, else free \-h \-s 1, else /proc/meminfo until Enter. The popup key runs it. On a tmux older than 3.2 the monitor opens in a window named ram.
+.TP
+.B daemon
+Sample the memory and publish every placeholder the status line uses, once per interval, until another daemon takes over or the tmux server ends. apply starts it in the options render mode.
+.TP
+.B doctor
+Print one row per dependency: tmux, each tool or file a figure comes from, the monitor the popup opens, the key it found bound, gum and the core tools.
+A settings row names any setting whose value it does not know.
+Exits 1 only when a required tool is missing.
+.TP
+.B version
+Print the version, then the tmux version.
+.TP
+.B help
+Print the help page.
+.SH OPTIONS
+.TP
+.B \-\-json
+.B list
+prints one JSON object.
+.TP
+.BI \-\-theme " name"
+Colours of the terminal interface:
+.BR kodougu ,
+.BR catppuccin\-mocha ,
+.BR catppuccin\-latte ,
+.BR dracula ,
+.BR nord ,
+.BR gruvbox ,
+.B tokyo\-night
+or
+.BR mono .
+The default is
+.BR kodougu .
+.TP
+.BI \-\- setting " value"
+Any tmux option below, named with dashes, such as
+.B \-\-interval
+or
+.BR \-\-top\-process\-label .
+It also takes the form
+.IR \-\-setting = value ,
+and outranks the environment and the tmux option. Given to
+.BR apply ,
+it rides on the popup key and on every status call.
+.SH ENVIRONMENT
+.TP
+.BI RAM_REVAMPED_ SETTING
+Any tmux option below in capitals, such as
+.BR RAM_REVAMPED_INTERVAL .
+It outranks the tmux option.
+.TP
+.B RAM_REVAMPED_THEME
+The theme when
+.B \-\-theme
+is not given.
+.TP
+.B RAM_REVAMPED_ACCENT
+A colour such as #CBA6F7 that replaces the accent of the theme.
+.TP
+.B KODOUGU_THEME
+The theme of every kodougu and tmux-revamped tool, when neither
+.B \-\-theme
+nor
+.B RAM_REVAMPED_THEME
+is set.
+.TP
+.B KODOUGU_ACCENT
+The accent of every kodougu and tmux-revamped tool, when
+.B RAM_REVAMPED_ACCENT
+is not set.
+.TP
+.B NO_COLOR
+Turns colour off in every theme.
+.SH TMUX OPTIONS
+An empty tmux option means its default. A key set to off binds nothing.
+.TP
+.B @ram_revamped_popup_key
+The prefix key that opens the monitor popup. off binds nothing. The default is M\-r, left alone when someone else holds it.
+.TP
+.B @ram_revamped_popup_width
+The width of the popup, as tmux reads it. The default is 80%.
+.TP
+.B @ram_revamped_popup_height
+The height of the popup. The default is 60%.
+.TP
+.B @ram_revamped_interval
+Seconds a sample stays fresh before the memory is read again. The default is 5.
+.TP
+.B @ram_revamped_detail_interval
+Seconds the pressure and the top process stay fresh. The default is 60.
+.TP
+.B @ram_revamped_render
+jobs turns each placeholder into a call the status line runs. options turns it into a read of a tmux option that the daemon fills, so a status refresh starts no process. Any other value means jobs. The default is jobs.
+.TP
+.B @ram_revamped_history_size
+Samples kept for #{ram_graph} and #{ram_trend}. Zero means the default. The default is 30.
+.TP
+.B @ram_revamped_medium_thresh
+Percent at which the tier becomes medium. The default is 50.
+.TP
+.B @ram_revamped_high_thresh
+Percent at which the tier becomes high. The default is 85.
+.TP
+.B @ram_revamped_swap_warn_thresh
+Percent of swap in use at which #{ram_swap_icon} and #{ram_swap_color} print. The default is 1.
+.TP
+.B @ram_revamped_trend_threshold
+Percentage points between the oldest and the newest sample that move #{ram_trend} off steady. The default is 3.
+.TP
+.B @ram_revamped_low_icon
+What #{ram_icon} prints in the low tier. The default is one bar of three.
+.TP
+.B @ram_revamped_medium_icon
+What #{ram_icon} prints in the medium tier. The default is two bars of three.
+.TP
+.B @ram_revamped_high_icon
+What #{ram_icon} prints in the high tier. The default is three bars.
+.TP
+.B @ram_revamped_low_fg_color
+The style #{ram_fg_color} and #{ram_pressure_fg_color} print in the low tier. The default is none.
+.TP
+.B @ram_revamped_medium_fg_color
+The style they print in the medium tier. The default is none.
+.TP
+.B @ram_revamped_high_fg_color
+The style they print in the high tier. The default is none.
+.TP
+.B @ram_revamped_low_bg_color
+The style #{ram_bg_color} prints in the low tier. The default is none.
+.TP
+.B @ram_revamped_medium_bg_color
+The style #{ram_bg_color} prints in the medium tier. The default is none.
+.TP
+.B @ram_revamped_high_bg_color
+The style #{ram_bg_color} prints in the high tier. The default is none.
+.TP
+.B @ram_revamped_swap_active_icon
+What #{ram_swap_icon} prints during the swap warning. The default is none.
+.TP
+.B @ram_revamped_swap_active_color
+What #{ram_swap_color} prints during the swap warning. The default is none.
+.TP
+.B @ram_revamped_trend_up
+What #{ram_trend} prints while the memory in use rises. The default is an up arrow.
+.TP
+.B @ram_revamped_trend_down
+What it prints while the memory in use falls. The default is a down arrow.
+.TP
+.B @ram_revamped_trend_flat
+What it prints while the memory in use is steady. The default is a right arrow.
+.TP
+.B @ram_revamped_percentage_format
+printf format of #{ram_percentage}. The default is %s%%.
+.TP
+.B @ram_revamped_available_format
+printf format of #{ram_available}. The default is %s%%.
+.TP
+.B @ram_revamped_swap_format
+printf format of #{ram_swap}. The default is %s%%.
+.TP
+.B @ram_revamped_pressure_format
+printf format of #{ram_pressure}. The default is %s%%.
+.TP
+.B @ram_revamped_breakdown_format
+printf format of the four sizes of #{ram_breakdown}, in gigabytes. The default is W %sG C %sG I %sG F %sG.
+.TP
+.B @ram_revamped_absolute_format
+printf format of #{ram_absolute}: the memory in use, then the total. The default is %s / %s.
+.TP
+.B @ram_revamped_commit_format
+printf format of #{ram_commit}. The default is %s%%.
+.TP
+.B @ram_revamped_reclaimable_format
+printf format of #{ram_reclaimable}. The default is %s.
+.TP
+.B @ram_revamped_top_process_format
+printf format of #{ram_top_process}: the name, then its size. The default is %s %s.
+.TP
+.B @ram_revamped_icons
+ascii labels nothing. nerd puts a Nerd Font glyph before every metric that takes a label. The default is ascii.
+.TP
+.B @ram_revamped_fixed_width
+on pads the used, available and swap percents on the left to four characters, so a change from 9% to 42% does not shift the status line. The default is off.
+.TP
+.B @ram_revamped_percentage_label
+Text printed before the used percent, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_available_label
+Text printed before the available percent, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_swap_label
+Text printed before the swap percent, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_pressure_label
+Text printed before the pressure, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_breakdown_label
+Text printed before the breakdown, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_absolute_label
+Text printed before used of total, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_commit_label
+Text printed before the commit ratio, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_reclaimable_label
+Text printed before the reclaimable size, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_top_process_label
+Text printed before the top process, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_graph_label
+Text printed before the graph, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_trend_label
+Text printed before the trend, only when the value is not empty. The default is none.
+.TP
+.B @ram_revamped_percentage_width
+Characters the used percent is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_available_width
+Characters the available percent is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_swap_width
+Characters the swap percent is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_pressure_width
+Characters the pressure is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_breakdown_width
+Characters the breakdown is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_absolute_width
+Characters used of total is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_commit_width
+Characters the commit ratio is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_reclaimable_width
+Characters the reclaimable size is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_top_process_width
+Characters the top process is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_graph_width
+Characters the graph is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_trend_width
+Characters the trend is padded to on the left. A longer value is never cut. The default is none.
+.TP
+.B @ram_revamped_enable_logging
+1 writes a sample that found no figures to ~/.tmux/ram\-revamped\-logs/ram\-revamped.log. It is read as a tmux option only. The default is unset.
+.TP
+.B @revamped_theme
+The theme of every tmux-revamped tool, when nothing else sets one. The default
+is
+.BR kodougu .
+.PP
+The stored sample lives in
+.BR @ram_revamped_percent ,
+.BR _available ,
+.BR _swap ,
+.BR _pressure ,
+.BR _breakdown ,
+.BR _absolute ,
+.BR _commit ,
+.BR _reclaimable ,
+.BR _top_process
+and
+.BR _history ,
+with the time of the sample, of the pressure and of the top process in
+options that end in _ts. apply records the placeholders the status line uses
+in
+.BR @ram_revamped_published ,
+the daemon writes each one to
+.BI @ram_revamped_out_ name
+and keeps its process id in
+.BR @ram_revamped_ticker_pid .
+.SH FILES
+.TP
+.B ~/.tmux/ram\-revamped\-logs/ram\-revamped.log
+Samples that found no figures, written only while @ram_revamped_enable_logging is 1.
+.SH EXIT STATUS
+0 on success, 1 on any failure.
+.SH SEE ALSO
+.BR tmux (1),
+.BR vm_stat (1),
+.BR proc (5),
+.BR gum (1)

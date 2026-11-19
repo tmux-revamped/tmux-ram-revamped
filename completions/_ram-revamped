@@ -1,0 +1,87 @@
+#compdef ram-revamped
+
+_ram_revamped() {
+  local -a commands
+  commands=(
+    'apply:bind the key and fill the status placeholders'
+    'list:print every command apply would send'
+    'status:print one placeholder'
+    'refresh:sample the memory now'
+    'card:print every figure as a table'
+    'popup:open a memory monitor in a tmux popup'
+    'daemon:publish the placeholders on every tick'
+    'doctor:check this machine'
+    'version:print the version'
+    'help:print the help page'
+  )
+
+  _arguments \
+    '--json[list prints one JSON object]' \
+    '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)' \
+    '--popup-key[key of the monitor popup]:value:' \
+    '--popup-width[width of the popup]:value:' \
+    '--popup-height[height of the popup]:value:' \
+    '--interval[seconds a sample stays fresh]:value:' \
+    '--detail-interval[seconds the pressure and the top process stay fresh]:value:' \
+    '--render[jobs or options]:value:(jobs options)' \
+    '--history-size[samples kept for the graph and the trend]:value:' \
+    '--medium-thresh[percent that starts the medium tier]:value:' \
+    '--high-thresh[percent that starts the high tier]:value:' \
+    '--swap-warn-thresh[swap percent that starts the warning]:value:' \
+    '--trend-threshold[points of change that move the trend]:value:' \
+    '--low-icon[icon of the low tier]:value:' \
+    '--medium-icon[icon of the medium tier]:value:' \
+    '--high-icon[icon of the high tier]:value:' \
+    '--low-fg-color[foreground style of the low tier]:value:' \
+    '--medium-fg-color[foreground style of the medium tier]:value:' \
+    '--high-fg-color[foreground style of the high tier]:value:' \
+    '--low-bg-color[background style of the low tier]:value:' \
+    '--medium-bg-color[background style of the medium tier]:value:' \
+    '--high-bg-color[background style of the high tier]:value:' \
+    '--swap-active-icon[text of the swap warning]:value:' \
+    '--swap-active-color[style of the swap warning]:value:' \
+    '--trend-up[the rising trend]:value:' \
+    '--trend-down[the falling trend]:value:' \
+    '--trend-flat[the steady trend]:value:' \
+    '--percentage-format[printf format of the used percent]:value:' \
+    '--available-format[printf format of the available percent]:value:' \
+    '--swap-format[printf format of the swap percent]:value:' \
+    '--pressure-format[printf format of the pressure]:value:' \
+    '--breakdown-format[printf format of the four breakdown sizes]:value:' \
+    '--absolute-format[printf format of used, then total]:value:' \
+    '--commit-format[printf format of the commit ratio]:value:' \
+    '--reclaimable-format[printf format of the reclaimable size]:value:' \
+    '--top-process-format[printf format of the name, then its size]:value:' \
+    '--icons[ascii or nerd]:value:(ascii nerd)' \
+    '--fixed-width[pad every percent to four characters]:value:(on off)' \
+    '--percentage-label[label before the used percent]:value:' \
+    '--available-label[label before the available percent]:value:' \
+    '--swap-label[label before the swap percent]:value:' \
+    '--pressure-label[label before the pressure]:value:' \
+    '--breakdown-label[label before the breakdown]:value:' \
+    '--absolute-label[label before used of total]:value:' \
+    '--commit-label[label before the commit ratio]:value:' \
+    '--reclaimable-label[label before the reclaimable size]:value:' \
+    '--top-process-label[label before the top process]:value:' \
+    '--graph-label[label before the graph]:value:' \
+    '--trend-label[label before the trend]:value:' \
+    '--percentage-width[width of the used percent]:value:' \
+    '--available-width[width of the available percent]:value:' \
+    '--swap-width[width of the swap percent]:value:' \
+    '--pressure-width[width of the pressure]:value:' \
+    '--breakdown-width[width of the breakdown]:value:' \
+    '--absolute-width[width of used of total]:value:' \
+    '--commit-width[width of the commit ratio]:value:' \
+    '--reclaimable-width[width of the reclaimable size]:value:' \
+    '--top-process-width[width of the top process]:value:' \
+    '--graph-width[width of the graph]:value:' \
+    '--trend-width[width of the trend]:value:' \
+    '1:command:->command' \
+    '2:name:(percentage icon fg_color bg_color available swap swap_icon swap_color pressure pressure_fg_color breakdown absolute commit reclaimable top_process graph trend text)'
+
+  if [[ "${state}" == command ]]; then
+    _describe 'command' commands
+  fi
+}
+
+_ram_revamped "$@"

@@ -1,0 +1,3 @@
+$ ram-revamped frobnicate
+ram-revamped: unknown command 'frobnicate'. run 'ram-revamped help' for usage.
+exit 1

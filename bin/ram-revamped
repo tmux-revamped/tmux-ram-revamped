@@ -1,0 +1,501 @@
+#!/bin/sh
+[ -n "${ZSH_VERSION:-}" ] && emulate sh
+set -eu
+
+ram_revamped_self="$0"
+case "${ram_revamped_self}" in
+*/*) ;;
+*) ram_revamped_self="$(command -v -- "${ram_revamped_self}")" ;;
+esac
+ram_revamped_lib="$(cd "${ram_revamped_self%/*}/../lib" && pwd)" || exit 1
+
+for ram_revamped_inherited in $(env | sed -n -e 's/^\(REVAMPED_[A-Za-z0-9_]*\)=.*/\1/p' -e 's/^\(RAM_REVAMPED_[A-Za-z0-9_]*_LOADED\)=.*/\1/p'); do
+  case "${ram_revamped_inherited}" in
+  REVAMPED_TEST_*) continue ;;
+  *) unset "${ram_revamped_inherited}" ;;
+  esac
+done
+
+REVAMPED_LIB="${ram_revamped_lib}"
+# shellcheck source=SCRIPTDIR/../lib/core.sh
+. "${REVAMPED_LIB}/core.sh"
+# shellcheck source=SCRIPTDIR/../lib/ram.sh
+. "${REVAMPED_LIB}/ram.sh"
+
+ram_revamped_interface() {
+  # shellcheck disable=SC2034
+  REVAMPED_UI_NAME=ram-revamped REVAMPED_UI_VERSION="${RAM_REVAMPED_VERSION}" REVAMPED_UI_TAGLINE="memory, swap and pressure in the status bar"
+  if [ -n "${RAM_REVAMPED_ACCENT:-}" ]; then
+    # shellcheck disable=SC2034
+    REVAMPED_UI_ACCENT_CHOICE="${RAM_REVAMPED_ACCENT}" REVAMPED_UI_ACCENT_NAME=RAM_REVAMPED_ACCENT
+  fi
+  # shellcheck source=SCRIPTDIR/../lib/cli.sh
+  . "${REVAMPED_LIB}/cli.sh"
+  # shellcheck source=SCRIPTDIR/../lib/doctor.sh
+  . "${REVAMPED_LIB}/doctor.sh"
+}
+
+ram_revamped_usage() {
+  ram_revamped_interface
+  revamped_cli_usage_error "$1"
+}
+
+ram_revamped_bad() {
+  ram_revamped_interface
+  revamped_cli_die "$1"
+}
+
+ram_revamped_help() {
+  revamped_cli_help_page <<'HELP'
+ram-revamped - memory, swap and pressure in the status bar
+
+usage:
+  ram-revamped apply          bind the key and fill the placeholders
+  ram-revamped list           print what apply would send to tmux
+  ram-revamped status NAME    print one placeholder: percentage, icon,
+                              fg_color, bg_color, available, swap,
+                              swap_icon, swap_color, pressure,
+                              pressure_fg_color, breakdown, absolute,
+                              commit, reclaimable, top_process, graph,
+                              trend or text
+  ram-revamped refresh        sample the memory now for the status line
+  ram-revamped card           print every figure as a table
+  ram-revamped popup          open a memory monitor in a tmux popup
+  ram-revamped daemon         publish the placeholders on every tick, for
+                              the options render mode
+  ram-revamped doctor         check this machine
+  ram-revamped version        print the version
+  ram-revamped help           print this page
+
+keys:
+  --popup-key KEY             the prefix key for the monitor popup, or off
+  --popup-width SIZE          the popup's width, such as 80%
+  --popup-height SIZE         the popup's height, such as 60%
+
+sampling:
+  --interval SECONDS          how long a sample stays fresh
+  --detail-interval SECONDS   how long the pressure and the top process
+                              stay fresh
+  --render MODE               jobs or options
+  --history-size COUNT        samples kept for the graph and the trend
+
+tiers:
+  --medium-thresh PERCENT     where the medium tier starts
+  --high-thresh PERCENT       where the high tier starts
+  --TIER-icon TEXT            what #{ram_icon} prints in the low, medium
+                              or high tier
+  --TIER-fg-color STYLE       what #{ram_fg_color} prints in each tier
+  --TIER-bg-color STYLE       what #{ram_bg_color} prints in each tier
+  --swap-warn-thresh PERCENT  swap in use that turns the swap warning on
+  --swap-active-icon TEXT     what #{ram_swap_icon} prints during it
+  --swap-active-color STYLE   what #{ram_swap_color} prints during it
+  --trend-threshold POINTS    change that moves the trend off steady
+  --trend-up TEXT             the rising trend
+  --trend-down TEXT           the falling trend
+  --trend-flat TEXT           the steady trend
+
+formats:
+  --percentage-format FORMAT  printf format of the used percent
+  --available-format FORMAT   printf format of the available percent
+  --swap-format FORMAT        printf format of the swap percent
+  --pressure-format FORMAT    printf format of the pressure
+  --breakdown-format FORMAT   printf format of the four breakdown sizes
+  --absolute-format FORMAT    printf format of used, then total
+  --commit-format FORMAT      printf format of the commit ratio
+  --reclaimable-format FORMAT printf format of the reclaimable size
+  --top-process-format FORMAT printf format of the name, then its size
+  --icons SET                 ascii, or nerd for a Nerd Font glyph before
+                              every metric
+  --METRIC-label TEXT         the label before one metric
+  --fixed-width on|off        on pads every percent to four characters
+  --METRIC-width COUNT        the width of one metric
+
+output:
+  --json                      list prints one JSON object
+  --theme NAME                the look: kodougu, catppuccin-mocha,
+                              catppuccin-latte, dracula, nord, gruvbox,
+                              tokyo-night or mono
+
+environment:
+  RAM_REVAMPED_<SETTING>   the same as the option of that name, such as
+                           RAM_REVAMPED_INTERVAL for --interval
+  RAM_REVAMPED_THEME       the look, when --theme is not given
+  RAM_REVAMPED_ACCENT      a colour such as #CBA6F7 for the accent
+  KODOUGU_THEME            the family look, when neither is given
+  KODOUGU_ACCENT           the family accent, when the tool's is unset
+  NO_COLOR                 turn colour off
+
+tmux options:
+  @ram_revamped_popup_key           the monitor popup key (default M-r)
+  @ram_revamped_popup_width         width of the popup (default 80%)
+  @ram_revamped_popup_height        height of the popup (default 60%)
+  @ram_revamped_interval            seconds a sample stays fresh
+                                    (default 5)
+  @ram_revamped_detail_interval     seconds the pressure and the top
+                                    process stay fresh (default 60)
+  @ram_revamped_render              jobs or options (default jobs)
+  @ram_revamped_history_size        samples kept (default 30)
+  @ram_revamped_medium_thresh       percent that starts the medium tier
+                                    (default 50)
+  @ram_revamped_high_thresh         percent that starts the high tier
+                                    (default 85)
+  @ram_revamped_<tier>_icon         icon of the low, medium or high tier
+                                    (default one, two or three bars)
+  @ram_revamped_<tier>_fg_color     style of #{ram_fg_color} in each tier
+                                    (default none)
+  @ram_revamped_<tier>_bg_color     style of #{ram_bg_color} in each tier
+                                    (default none)
+  @ram_revamped_swap_warn_thresh    swap percent that starts the warning
+                                    (default 1)
+  @ram_revamped_swap_active_icon    text of #{ram_swap_icon} (default none)
+  @ram_revamped_swap_active_color   style of #{ram_swap_color}
+                                    (default none)
+  @ram_revamped_trend_threshold     points of change off steady (default 3)
+  @ram_revamped_trend_up            rising trend (default an up arrow)
+  @ram_revamped_trend_down          falling trend (default a down arrow)
+  @ram_revamped_trend_flat          steady trend (default a right arrow)
+  @ram_revamped_percentage_format   format of #{ram_percentage}
+                                    (default "%s%%")
+  @ram_revamped_available_format    format of #{ram_available}
+                                    (default "%s%%")
+  @ram_revamped_swap_format         format of #{ram_swap} (default "%s%%")
+  @ram_revamped_pressure_format     format of #{ram_pressure}
+                                    (default "%s%%")
+  @ram_revamped_breakdown_format    format of #{ram_breakdown}
+                                    (default "W %sG C %sG I %sG F %sG")
+  @ram_revamped_absolute_format     format of #{ram_absolute}
+                                    (default "%s / %s")
+  @ram_revamped_commit_format       format of #{ram_commit}
+                                    (default "%s%%")
+  @ram_revamped_reclaimable_format  format of #{ram_reclaimable}
+                                    (default "%s")
+  @ram_revamped_top_process_format  format of #{ram_top_process}
+                                    (default "%s %s")
+  @ram_revamped_icons               ascii or nerd (default ascii)
+  @ram_revamped_fixed_width         on or off (default off)
+  @ram_revamped_<metric>_label      label before one metric (default none)
+  @ram_revamped_<metric>_width      width of one metric (default none)
+  @ram_revamped_enable_logging      1 writes a failed sample to a log
+                                    (unset)
+  @revamped_theme                   the family look (default kodougu)
+
+notes:
+  A metric that takes a label and a width is percentage, available, swap,
+  pressure, breakdown, absolute, commit, reclaimable, top_process, graph or
+  trend, written with dashes in an option, such as --top-process-label.
+  The placeholders are #{ram_<name>} for each name status takes. Each
+  prints the stored sample at once, and starts one background sample when
+  it is older than the interval. The pressure and the top process are read
+  only for a placeholder the status line uses. With --render options each
+  placeholder reads a tmux option that a background process fills on
+  every tick, so a status refresh starts no process.
+
+examples:
+  ram-revamped status percentage
+  ram-revamped card
+  ram-revamped --icons nerd --fixed-width on apply
+  ram-revamped list --json
+HELP
+}
+
+ram_revamped_show_version() {
+  ram_revamped_show_version_tmux=$(tmux -V 2>/dev/null) || ram_revamped_show_version_tmux=missing
+  printf '%s %s\n' ram-revamped "${RAM_REVAMPED_VERSION}"
+  printf 'tmux: %s\n' "${ram_revamped_show_version_tmux#tmux }"
+}
+
+ram_revamped_doctor_source() {
+  ram_revamped_doctor_source_path=$(command -v "$1" 2>/dev/null) || ram_revamped_doctor_source_path=""
+  if [ -n "${ram_revamped_doctor_source_path}" ]; then
+    revamped_doctor_line "$1" ok "${ram_revamped_doctor_source_path}, $2"
+    return 0
+  fi
+  revamped_doctor_line "$1" warn "$3"
+}
+
+ram_revamped_doctor_file() {
+  if cat "$2" >/dev/null 2>&1; then
+    revamped_doctor_line "$1" ok "$2, $3"
+    return 0
+  fi
+  revamped_doctor_line "$1" warn "$4"
+}
+
+ram_revamped_doctor_macos() {
+  ram_revamped_doctor_source vm_stat "reads the memory, the pressure and the breakdown" "without it every figure stays empty"
+  ram_revamped_doctor_source sysctl "reads the swap" "without it the swap stays empty"
+  revamped_doctor_line commit warn "macOS keeps no commit limit, so the commit ratio stays empty"
+}
+
+ram_revamped_doctor_linux() {
+  ram_revamped_doctor_file meminfo /proc/meminfo "holds every figure but the pressure" "/proc/meminfo cannot be read, so every figure stays empty"
+  ram_revamped_doctor_file pressure /proc/pressure/memory "holds the pressure" "/proc/pressure/memory cannot be read, so the pressure stays empty"
+}
+
+ram_revamped_doctor_monitor() {
+  ram_revamped_monitor
+  case "${RAM_REVAMPED_MONITOR}" in
+  btop | htop)
+    ram_revamped_doctor_monitor_path=$(command -v "${RAM_REVAMPED_MONITOR}")
+    revamped_doctor_line monitor ok "${ram_revamped_doctor_monitor_path}, opens in the popup"
+    ;;
+  "vm_stat 1") revamped_doctor_line monitor warn "neither btop nor htop is installed, so the popup runs vm_stat 1" ;;
+  "free -h -s 1") revamped_doctor_line monitor warn "neither btop nor htop is installed, so the popup runs free -h -s 1" ;;
+  *) revamped_doctor_line monitor warn "neither btop, htop nor free is installed, so the popup prints /proc/meminfo" ;;
+  esac
+}
+
+ram_revamped_doctor_keys() {
+  if [ -n "${RAM_REVAMPED_SKIPPED}" ]; then
+    revamped_doctor_line keys warn "already bound and left alone: ${RAM_REVAMPED_SKIPPED}"
+    return 0
+  fi
+  revamped_doctor_line keys ok "every key it binds is free or its own"
+}
+
+ram_revamped_doctor_settings() {
+  ram_revamped_doctor_settings_rows=$(ram_revamped_setting_rows)
+  # shellcheck disable=SC2154
+  revamped_doctor_settings "${RAM_REVAMPED_KINDS}" "${ram_revamped_doctor_settings_rows}"
+}
+
+ram_revamped_doctor() {
+  ram_revamped_plan
+  revamped_doctor_tmux
+  if revamped_is_macos; then
+    ram_revamped_doctor_macos
+  else
+    ram_revamped_doctor_linux
+  fi
+  ram_revamped_doctor_source ps "names the process that holds the most memory" "without it the top process stays empty"
+  ram_revamped_doctor_monitor
+  ram_revamped_doctor_settings
+  ram_revamped_doctor_keys
+  revamped_doctor_gum
+  revamped_doctor_core_tools awk sed tr date cat
+  revamped_doctor_finish
+  [ "${REVAMPED_DOCTOR_MISSING}" -eq 0 ] || exit 1
+}
+
+ram_revamped_list() {
+  ram_revamped_plan
+  if [ -n "${ram_revamped_json}" ]; then
+    ram_revamped_json
+    return 0
+  fi
+  ram_revamped_lines
+}
+
+ram_revamped_apply_command() {
+  ram_revamped_apply
+  ram_revamped_apply_command_sent=$(ram_revamped_bindings)
+  case "${ram_revamped_apply_command_sent}" in
+  1) printf 'Applied. 1 key is bound.\n' ;;
+  *) printf 'Applied. %s keys are bound.\n' "${ram_revamped_apply_command_sent}" ;;
+  esac
+}
+
+ram_revamped_read_all() {
+  ram_revamped_load
+  RAM_REVAMPED_WANT="${RAM_REVAMPED_S_published}"
+  [ "$1" != all ] || RAM_REVAMPED_WANT="${RAM_REVAMPED_METRICS}"
+  ram_revamped_refresh
+  [ "${RAM_REVAMPED_STORED}" = 1 ] || ram_revamped_bad "no tmux server is running, so the sample has nowhere to go"
+}
+
+ram_revamped_closing() {
+  if [ -z "${RAM_REVAMPED_S_percent}" ]; then
+    printf '%s. No memory figures were found.\n' "$1"
+    return 0
+  fi
+  printf '%s. %s%% of the memory is in use.\n' "$1" "${RAM_REVAMPED_S_percent}"
+}
+
+ram_revamped_refresh_command() {
+  ram_revamped_read_all published
+  ram_revamped_closing Refreshed
+}
+
+ram_revamped_card_row() {
+  RAM_REVAMPED_CARD="${RAM_REVAMPED_CARD}$1	${2:--}
+"
+}
+
+ram_revamped_card_breakdown() {
+  if [ -z "${RAM_REVAMPED_S_breakdown}" ]; then
+    ram_revamped_card_row Breakdown ""
+    return 0
+  fi
+  IFS=' ' read -r ram_revamped_card_breakdown_wired ram_revamped_card_breakdown_packed ram_revamped_card_breakdown_idle ram_revamped_card_breakdown_free <<EOF
+${RAM_REVAMPED_S_breakdown}
+EOF
+  ram_revamped_card_row Breakdown "W ${ram_revamped_card_breakdown_wired}G C ${ram_revamped_card_breakdown_packed}G I ${ram_revamped_card_breakdown_idle}G F ${ram_revamped_card_breakdown_free}G"
+}
+
+ram_revamped_card_rows() {
+  RAM_REVAMPED_CARD=""
+  ram_revamped_card_row Used "${RAM_REVAMPED_S_percent:+${RAM_REVAMPED_S_percent}%}"
+  ram_revamped_card_row Available "${RAM_REVAMPED_S_available:+${RAM_REVAMPED_S_available}%}"
+  ram_revamped_card_row Swap "${RAM_REVAMPED_S_swap:+${RAM_REVAMPED_S_swap}%}"
+  ram_revamped_card_row Pressure "${RAM_REVAMPED_S_pressure:+${RAM_REVAMPED_S_pressure}%}"
+  ram_revamped_card_row "Used of total" "${RAM_REVAMPED_S_absolute:+${RAM_REVAMPED_S_absolute%% *} of ${RAM_REVAMPED_S_absolute#* }}"
+  ram_revamped_card_breakdown
+  ram_revamped_card_row Commit "${RAM_REVAMPED_S_commit:+${RAM_REVAMPED_S_commit}%}"
+  ram_revamped_card_row Reclaimable "${RAM_REVAMPED_S_reclaimable}"
+  ram_revamped_card_row "Top process" "${RAM_REVAMPED_S_top_process:+${RAM_REVAMPED_S_top_process#* }, ${RAM_REVAMPED_S_top_process%% *}}"
+  ram_revamped_value_graph
+  ram_revamped_card_row History "${RAM_REVAMPED_OUT}"
+  ram_revamped_value_trend
+  ram_revamped_card_row Trend "${RAM_REVAMPED_OUT}"
+}
+
+ram_revamped_card() {
+  ram_revamped_read_all all
+  ram_revamped_card_rows
+  ram_revamped_card_closing=$(ram_revamped_closing Read)
+  if revamped_ui_out; then
+    printf 'Figure\tValue\n%s' "${RAM_REVAMPED_CARD}" | revamped_ui_table
+    revamped_ui_done "${ram_revamped_card_closing}"
+    return 0
+  fi
+  printf '%s' "${RAM_REVAMPED_CARD}" | awk -F '\t' '{ printf "%-18s %s\n", $1, $2 }'
+  printf '%s\n' "${ram_revamped_card_closing}"
+}
+
+ram_revamped_status_command() {
+  case " ${RAM_REVAMPED_METRICS} " in
+  *" ${1:-} "*) ram_revamped_status "$1" ;;
+  *) ram_revamped_status_refused "${1:-}" ;;
+  esac
+}
+
+ram_revamped_status_refused() {
+  [ -n "$1" ] || ram_revamped_usage "no placeholder given"
+  ram_revamped_bad "status must be percentage, icon, fg_color, bg_color, available, swap, swap_icon, swap_color, pressure, pressure_fg_color, breakdown, absolute, commit, reclaimable, top_process, graph, trend or text, got: $1"
+}
+
+ram_revamped_daemon_command() {
+  set +e
+  ram_revamped_daemon
+  ram_revamped_daemon_command_ended=$?
+  set -e
+  [ "${ram_revamped_daemon_command_ended}" -ne 0 ] || exec "${ram_revamped_self}" daemon
+}
+
+ram_revamped_start_menu() {
+  revamped_cli_require_terminal
+  ram_revamped_start_menu_choice=$(revamped_cli_menu "Show the memory now" "List the bindings" "Apply them now" "Check this machine" "Help")
+  case "${ram_revamped_start_menu_choice}" in
+  "Show the memory now") ram_revamped_card ;;
+  "List the bindings") ram_revamped_list ;;
+  "Apply them now") ram_revamped_apply_command ;;
+  "Check this machine") ram_revamped_doctor ;;
+  *) ram_revamped_help ;;
+  esac
+}
+
+ram_revamped_dispatch() {
+  case "${1:-}" in
+  doctor) ram_revamped_doctor ;;
+  version | --version | -V) ram_revamped_show_version ;;
+  help | --help | -h) ram_revamped_help ;;
+  list) ram_revamped_list ;;
+  card) ram_revamped_card ;;
+  refresh) ram_revamped_refresh_command ;;
+  "") ram_revamped_start_menu ;;
+  *) revamped_cli_usage_error "unknown command '$1'" ;;
+  esac
+}
+
+ram_revamped_known() {
+  [ "$1" != --theme ] || return 0
+  ram_revamped_known_name=$(ram_revamped_setting_name "$1")
+  [ -n "${ram_revamped_known_name}" ] || ram_revamped_usage "unknown option '$1'"
+}
+
+ram_revamped_set() {
+  ram_revamped_set_upper=$(printf '%s\n' "$1" | tr '[:lower:]' '[:upper:]')
+  export "RAM_REVAMPED_${ram_revamped_set_upper}=$2"
+}
+
+ram_revamped_option() {
+  ram_revamped_option_name=$(ram_revamped_setting_name "$1")
+  [ -n "${ram_revamped_option_name}" ] || ram_revamped_usage "unknown option '$1'"
+  ram_revamped_set "${ram_revamped_option_name}" "$2"
+}
+
+ram_revamped_check_numbers() {
+  ram_revamped_check_numbers_bad=$(env | awk -F '=' '$1 ~ /^RAM_REVAMPED_(INTERVAL|DETAIL_INTERVAL|HISTORY_SIZE|TREND_THRESHOLD|[A-Z_]+_THRESH|[A-Z_]+_WIDTH)$/ && $1 != "RAM_REVAMPED_FIXED_WIDTH" && $1 != "RAM_REVAMPED_POPUP_WIDTH" { value = substr($0, length($1) + 2); if (value != "" && value !~ /^[0-9]+$/) { name = tolower(substr($1, 14)); gsub(/_/, "-", name); if (bad == "") { bad = name "=" value } } } END { if (bad != "") { print bad } }')
+  [ -z "${ram_revamped_check_numbers_bad}" ] || ram_revamped_bad "--${ram_revamped_check_numbers_bad%%=*} must be a whole number, got: ${ram_revamped_check_numbers_bad#*=}"
+}
+
+ram_revamped_check_choices() {
+  case "${RAM_REVAMPED_ICONS-ascii}" in
+  ascii | nerd) : ;;
+  *) ram_revamped_bad "--icons must be ascii or nerd, got: ${RAM_REVAMPED_ICONS}" ;;
+  esac
+  case "${RAM_REVAMPED_FIXED_WIDTH-off}" in
+  on | off) : ;;
+  *) ram_revamped_bad "--fixed-width must be on or off, got: ${RAM_REVAMPED_FIXED_WIDTH}" ;;
+  esac
+  case "${RAM_REVAMPED_RENDER-jobs}" in
+  jobs | options) return 0 ;;
+  *) ram_revamped_bad "--render must be jobs or options, got: ${RAM_REVAMPED_RENDER}" ;;
+  esac
+}
+
+ram_revamped_check() {
+  ram_revamped_check_numbers
+  ram_revamped_check_choices
+}
+
+ram_revamped_main() {
+  ram_revamped_theme="${RAM_REVAMPED_THEME:-}" ram_revamped_json="" ram_revamped_left=$# ram_revamped_rest=0
+  while [ "${ram_revamped_left}" -gt 0 ]; do
+    ram_revamped_arg="$1"
+    shift
+    ram_revamped_left=$((ram_revamped_left - 1))
+    case "${ram_revamped_rest}:${ram_revamped_arg}" in
+    1:*) set -- "$@" "${ram_revamped_arg}" ;;
+    0:--) ram_revamped_rest=1 ;;
+    0:--json) ram_revamped_json=1 ;;
+    0:-h | 0:-V | 0:--help | 0:--version) set -- "$@" "${ram_revamped_arg}" ;;
+    0:--theme=*) ram_revamped_theme="${ram_revamped_arg#--theme=}" ;;
+    0:--*=*) ram_revamped_option "${ram_revamped_arg%%=*}" "${ram_revamped_arg#*=}" ;;
+    0:--*)
+      ram_revamped_known "${ram_revamped_arg}"
+      [ "${ram_revamped_left}" -gt 0 ] || ram_revamped_usage "option '${ram_revamped_arg}' needs a value"
+      if [ "${ram_revamped_arg}" = --theme ]; then
+        ram_revamped_theme="$1"
+      else
+        ram_revamped_option "${ram_revamped_arg}" "$1"
+      fi
+      shift
+      ram_revamped_left=$((ram_revamped_left - 1))
+      ;;
+    0:-?*) ram_revamped_usage "unknown option '${ram_revamped_arg}'" ;;
+    *) set -- "$@" "${ram_revamped_arg}" ;;
+    esac
+  done
+  ram_revamped_check
+  ram_revamped_run "${ram_revamped_theme}" "$@"
+}
+
+ram_revamped_run() {
+  ram_revamped_run_theme="$1"
+  shift
+  [ -z "${ram_revamped_json}" ] || [ "${1:-}" = list ] || ram_revamped_usage "option '--json' works only with list"
+  case "${1:-}" in
+  apply) ram_revamped_apply ;;
+  status) ram_revamped_status_command "${2:-}" ;;
+  popup) ram_revamped_popup ;;
+  daemon) ram_revamped_daemon_command ;;
+  *)
+    ram_revamped_interface
+    revamped_cli_start "${ram_revamped_run_theme}"
+    ram_revamped_dispatch "$@"
+    ;;
+  esac
+}
+
+ram_revamped_main "$@"
