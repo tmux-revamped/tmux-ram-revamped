@@ -1,5 +1,22 @@
 # Changelog
 
+# [4.0.0](https://github.com/tmux-revamped/tmux-ram-revamped/compare/v3.0.0...v4.0.0) (2026-11-19)
+
+
+* feat!: rewrite the plugin in POSIX sh ([0d99f44](https://github.com/tmux-revamped/tmux-ram-revamped/commit/0d99f446793ac3f881bc478ae443fbdc377c8902))
+
+
+### BREAKING CHANGES
+
+* the script moved from src/ram.sh to
+bin/ram-revamped, and a placeholder is printed by
+"ram-revamped status NAME", where it was "ram.sh NAME". bash is no
+longer required. A tmux option set to nothing now means its default,
+where it used to stay empty, so a label set to nothing keeps its Nerd
+Font glyph. A figure with no source is empty, where the used and
+available percents read 0. @ram_revamped_detail_interval now times
+the pressure and the top process only.
+
 # [3.0.0](https://github.com/tmux-revamped/tmux-ram-revamped/compare/v2.0.1...v3.0.0) (2026-11-18)
 
 
